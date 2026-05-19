@@ -1,10 +1,80 @@
+name: roteamento-resiliente
+
 services:
   valhalla:
     image: ghcr.io/valhalla/valhalla:latest
-    container_name: valhalla_engine_test
+    container_name: valhalla
     ports:
       - "8002:8002"
     volumes:
       - ../data:/data
-    command: >
-      valhalla_service /data/valhalla.json 1
+    command: valhalla_service /data/valhalla.json 1
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8002/status >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - roteamento
+
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: postgis
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-roteamento}
+      POSTGRES_USER: ${POSTGRES_USER:-roteamento}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em runtime/.env}
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-roteamento} -d $${POSTGRES_DB:-roteamento}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - roteamento
+
+  # Nominatim atrás de um profile porque o import do Sudeste leva horas e usa
+  # ~30-50 GB de disco. Suba sob demanda com:
+  #   docker compose --profile geocoding up -d nominatim
+  nominatim:
+    image: mediagis/nominatim:4.4
+    container_name: nominatim
+    profiles: ["geocoding"]
+    ports:
+      - "8080:8080"
+    environment:
+      # PBF montado FORA de /nominatim/ para escapar do `chown -R /nominatim`
+      # que o init.sh roda — falha em mount read-only e derruba o container.
+      PBF_PATH: /pbf/sudeste-latest.osm.pbf
+      NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:?defina NOMINATIM_PASSWORD em runtime/.env}
+      IMPORT_STYLE: address
+    shm_size: 1g
+    volumes:
+      - ../data/sudeste-latest.osm.pbf:/pbf/sudeste-latest.osm.pbf:ro
+      - nominatim_data:/var/lib/postgresql/14/main
+      - nominatim_flatnode:/nominatim/flatnode
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - roteamento
+
+volumes:
+  postgis_data:
+  nominatim_data:
+  nominatim_flatnode:
+
+networks:
+  roteamento:
+    driver: bridge
