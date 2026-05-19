@@ -77,7 +77,13 @@ data/
 └── traffic_report/          (summary.json + affected_edges.csv — auditoria)
 ```
 
-Total de disco usado: ~3-5 GB sem Nominatim. Com Nominatim importado: +30-50 GB no volume `nominatim_data`.
+Total de disco usado: ~3-5 GB sem Nominatim. Com Nominatim importado (Sudeste, medido em 2026-05-19):
+
+- `nominatim_data` (Postgres com índice): **~14 GB**
+- `nominatim_flatnode` (cache de nodes OSM): **~110 GB**
+- Total adicional: **~124 GB**
+
+O `flatnode` é alocado de forma esparsa (sparse file) — o tamanho lógico é grande mas o uso real em alguns filesystems pode ser menor. Em volumes Docker no Windows/macOS (Hyper-V VHD), o tamanho lógico é o que conta.
 
 ## Re-build dos tiles do Valhalla (quando trocar o `.pbf`)
 

@@ -8,7 +8,7 @@
 |---|---|---|
 | CPU | 4 cores | 8+ cores |
 | RAM | 8 GB | 16–32 GB (Valhalla + Nominatim + Postgres) |
-| Disco | 20 GB | 100 GB SSD (Nominatim usa ~30–50 GB sozinho) |
+| Disco | 20 GB | **200 GB SSD** (Nominatim sozinho ocupa ~124 GB — 14 GB de Postgres + 110 GB de flatnode) |
 | OS | Linux/macOS/Windows com Docker Desktop | Linux com Docker Engine |
 | Docker | 24+ com Compose v2 | 24+ |
 
@@ -43,7 +43,7 @@
    ```bash
    ./scripts/.venv/bin/python scripts/refresh_traffic.py
    ```
-8. **(Opcional) Subir Nominatim** (import ~2–6h):
+8. **(Opcional) Subir Nominatim** (import ~3-4h para Sudeste; ocupa ~124 GB depois — 14 GB de Postgres + 110 GB de flatnode):
    ```bash
    cd runtime && docker compose --profile geocoding up -d nominatim
    docker logs -f nominatim
