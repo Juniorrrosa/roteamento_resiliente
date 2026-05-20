@@ -8,9 +8,9 @@ O que já está pronto, o que falta, e em que ordem fazer.
 [✓] Etapa 0  — Validação técnica do Valhalla (binários, tiles, traffic.tar)
 [✓] Etapa 1  — Infraestrutura base (compose com valhalla + postgis + nominatim)
 [✓] Etapa 2  — Pipeline ERMAC -> Valhalla (build_traffic_csvs + refresh_traffic)
+[✓] Etapa 3  — Backend FastAPI (/health, /geocode, /alagamentos, /rota)
+[✓] Etapa 4  — Scraper CGE-SP + integração Nominatim + push snapshot
 [✓] Documentação operacional (esta pasta)
-[ ] Etapa 3  — Backend FastAPI
-[ ] Etapa 4  — Adaptação do scraper CGE-SP + integração com Nominatim
 [ ] Etapa 5  — Frontend (React + Leaflet/MapLibre)
 [ ] Etapa 6  — Modo polling automático do scraper (real-time)
 [ ] Etapa 7  — Monitoramento (Prometheus/Grafana ou equivalente)

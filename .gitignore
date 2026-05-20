@@ -24,3 +24,6 @@ build/
 
 # Modelo
 modelo_py/
+
+# Scraper debug
+scraper/_debug/

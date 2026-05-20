@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+app/__init__.py
+app/backend.py
+app/cge.py
+app/cli.py
+app/config.py
+app/geocoder.py
+app/pipeline.py
+roteamento_scraper.egg-info/PKG-INFO
+roteamento_scraper.egg-info/SOURCES.txt
+roteamento_scraper.egg-info/dependency_links.txt
+roteamento_scraper.egg-info/entry_points.txt
+roteamento_scraper.egg-info/requires.txt
+roteamento_scraper.egg-info/top_level.txt
+tests/test_cge_parser.py

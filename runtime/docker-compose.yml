@@ -19,6 +19,33 @@ services:
     networks:
       - roteamento
 
+  backend:
+    build: ../backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-roteamento}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em runtime/.env}@postgis:5432/${POSTGRES_DB:-roteamento}
+      VALHALLA_URL: http://valhalla:8002
+      NOMINATIM_URL: http://nominatim:8080
+      ERMAC_Q: "10.0"
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: "*"
+    depends_on:
+      valhalla:
+        condition: service_healthy
+      postgis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - roteamento
+
   postgis:
     image: postgis/postgis:16-3.4
     container_name: postgis
@@ -37,6 +64,24 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - roteamento
+
+  # Scraper do CGE-SP. Roda em modo batch (uma vez por execucao). Atras de profile
+  # porque nao faz sentido manter rodando — dispare manualmente:
+  #   docker compose --profile scraper run --rm scraper run --once [--dry-run] [--date dd/mm/YYYY]
+  scraper:
+    build: ../scraper
+    container_name: scraper
+    profiles: ["scraper"]
+    environment:
+      BACKEND_URL: http://backend:8000
+      CGE_URL: https://www.cgesp.org/v3/alagamentos.jsp
+      LOG_LEVEL: INFO
+      HEADLESS: "true"
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       - roteamento
 
