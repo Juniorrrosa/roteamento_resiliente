@@ -10,11 +10,12 @@
                                │ HTTP REST
                                ▼
                       ┌─────────────────┐
-                      │ Backend (TODO)  │
+                      │ Backend ✓       │
                       │ FastAPI         │
                       │  /rota          │
                       │  /alagamentos   │
                       │  /geocode       │
+                      │  /health        │
                       └─┬─────────┬──┬──┘
                         │         │  │
         ┌───────────────┘         │  └─────────────┐
@@ -27,15 +28,15 @@
   │          │            │  cache)  │      │              │
   └──────────┘            └──────────┘      └──────────────┘
         │                                          │
-        │  tiles Sudeste                           │  data: PBF
-        │  (1.07 GB)                               │  (799 MB)
+        │  tiles RMSP                              │  data: PBF
+        │  (128 MB)                                │  (137 MB)
         │  + speeds                                │  importacao:
-        │  injetadas                               │  ~30-50 GB
+        │  injetadas                               │  ~3-5 GB
         ▼                                          ▼
         ────────── volume: ./data/ ──────────
-        ├── sudeste-latest.osm.pbf  (.pbf OSM bruto, lido por Valhalla e Nominatim)
+        ├── sao-paulo.osm.pbf      (.pbf OSM bruto, recorte RMSP, lido por Valhalla e Nominatim)
         ├── valhalla.json          (config gerado pelo build)
-        ├── tiles/                 (1547 .gph - tiles do motor)
+        ├── tiles/                 (24 tiles .gph - motor)
         ├── tiles_backup/          (copia limpa pre-injecao, restauravel)
         ├── traffic_csvs/          (CSVs de tile com h(e) codificado)
         └── traffic_report/        (auditoria: summary.json + affected_edges.csv)
@@ -58,10 +59,9 @@
 - Porta: 5432
 - Inicializa com extensão PostGIS habilitada (script em `runtime/initdb/01-postgis.sql`)
 - Volume nomeado `postgis_data` (persistente)
-- Vai armazenar:
+- Tabelas criadas no init (`runtime/initdb/02-tables.sql`):
   - `alagamentos_realtime` (snapshot atual do CGE)
   - `geocode_cache` (resultados do Nominatim cacheados)
-  - Outras tabelas conforme o backend FastAPI for sendo desenvolvido
 
 ### Nominatim (geocoder)
 
@@ -69,20 +69,29 @@
 - Porta: 8080
 - Atrás de profile `geocoding` — não sobe no `docker compose up` padrão
 - Usa o mesmo `.pbf` do Valhalla (montado apenas o arquivo, fora de `/nominatim/` para evitar o `chown -R` do init.sh, ver [07 — Quirks](07-quirks-e-decisoes.md))
-- Import inicial **leva horas** para Sudeste e ocupa ~30-50 GB de disco
+- Import inicial leva **alguns minutos** para o recorte da RMSP e ocupa ~3-5 GB de disco (sem flatnode — ver [Quirk #7](07-quirks-e-decisoes.md))
 - Substitui o uso de Google Maps Geocoding API do scraper original
 
-### Backend (FastAPI) — **a fazer**
+### Backend (FastAPI) — **implementado** (Etapa 3)
 
-Ver [09 — Roadmap](09-roadmap.md).
+- Imagem própria (`backend/Dockerfile`, python:3.12-slim), sobe no `docker compose up` padrão na porta 8000
+- Stack: FastAPI + SQLAlchemy 2 + asyncpg (PostGIS) + httpx (Valhalla/Nominatim) + pydantic v2
+- Endpoints: `POST /rota`, `GET/POST /alagamentos` (+ `/snapshot`), `POST /geocode`, `GET /health`
+- Traduz `chuva: bool` → `date_time` (quirk #1) e monta `exclude_locations` a partir do PostGIS
+- Detalhes em [06 — API](06-api-valhalla.md)
 
 ### Frontend (React + Leaflet) — **a fazer**
 
 Ver [09 — Roadmap](09-roadmap.md).
 
-### Scraper CGE-SP — **a adaptar**
+### Scraper CGE-SP — **implementado** (Etapa 4)
 
-Código de partida: <https://github.com/vitor-yuichi/cge_scrapper>. Em fase 1, rodado manualmente em batch. Geocoder original (Google Maps) será substituído por Nominatim local.
+- Imagem própria (`scraper/Dockerfile`), atrás do profile `scraper` — rodado sob demanda em batch
+- Código de partida: <https://github.com/vitor-yuichi/cge_scrapper>, recriado nos padrões do projeto
+- Selenium + Chromium headless coleta o HTML do CGE-SP; BeautifulSoup faz o parse
+- Geocoder Google Maps original substituído pelo Nominatim local (via backend `/geocode`, com cache no PostGIS)
+- Pipeline: scrape → parse → geocode → `POST /alagamentos/snapshot` (aborta se 0 registros, pra não limpar o DB)
+- Polling automático ainda **a fazer** (Etapa 6) — hoje é disparo manual
 
 ## Fluxo de dados — exemplo de request de rota
 
@@ -102,15 +111,16 @@ Código de partida: <https://github.com/vitor-yuichi/cge_scrapper>. Em fase 1, r
 
 ## Fluxo de atualização dos pesos históricos
 
-Quando um novo shapefile histórico for entregue pela equipe:
+Quando um novo shapefile histórico for entregue pela equipe (ou após um rebuild dos tiles):
 
 ```powershell
-.\scripts\.venv\Scripts\python.exe scripts\refresh_traffic.py
+# use --force-backup após um rebuild (o backup antigo seria de outro .pbf)
+.\scripts\.venv\Scripts\python.exe scripts\refresh_traffic.py --force-backup
 ```
 
 Esse script faz tudo:
 
-1. Backup dos tiles (na primeira vez)
+1. Backup dos tiles em `data/tiles_backup/` (`--force-backup` sobrescreve o existente)
 2. Lê o shapefile, filtra `INTRANSITAVEL`, geocodifica via `/locate` do Valhalla
 3. Agrupa em CSVs por tile, calcula `speed = original / (1 + h/Q)`
 4. Roda `valhalla_add_predicted_traffic` dentro do container

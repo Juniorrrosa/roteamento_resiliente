@@ -85,8 +85,8 @@ services:
     networks:
       - roteamento
 
-  # Nominatim atrás de um profile porque o import do Sudeste leva horas e usa
-  # ~30-50 GB de disco. Suba sob demanda com:
+  # Nominatim atrás de um profile. Recorte da regiao metropolitana de SP:
+  # import em minutos, ~15 GB de disco. Suba sob demanda com:
   #   docker compose --profile geocoding up -d nominatim
   nominatim:
     image: mediagis/nominatim:4.4
@@ -97,14 +97,17 @@ services:
     environment:
       # PBF montado FORA de /nominatim/ para escapar do `chown -R /nominatim`
       # que o init.sh roda — falha em mount read-only e derruba o container.
-      PBF_PATH: /pbf/sudeste-latest.osm.pbf
+      PBF_PATH: /pbf/sao-paulo.osm.pbf
       NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:?defina NOMINATIM_PASSWORD em runtime/.env}
       IMPORT_STYLE: address
     shm_size: 1g
     volumes:
-      - ../data/sudeste-latest.osm.pbf:/pbf/sudeste-latest.osm.pbf:ro
+      - ../data/sao-paulo.osm.pbf:/pbf/sao-paulo.osm.pbf:ro
       - nominatim_data:/var/lib/postgresql/14/main
-      - nominatim_flatnode:/nominatim/flatnode
+      # SEM flatnode: a imagem so ativa o flatnode file se existir o dir
+      # /nominatim/flatnode (config.sh). Para extrato pequeno (RMSP) vale mais
+      # guardar os nos no Postgres — o flatnode e fixo em ~110 GB (dimensionado
+      # pelo maior node ID global do OSM, nao pelo recorte). Ver 07-quirks.
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/status || exit 1"]
       interval: 30s
@@ -118,7 +121,6 @@ services:
 volumes:
   postgis_data:
   nominatim_data:
-  nominatim_flatnode:
 
 networks:
   roteamento:

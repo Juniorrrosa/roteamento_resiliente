@@ -205,6 +205,6 @@ Algumas diferenças honestas que vale documentar:
 
 2. **`b(e) = ∞`:**
    - Paper: peso literalmente infinito → caminho proibido absoluto.
-   - Valhalla `exclude_locations`: tenta evitar; se todas as rotas passam pelo ponto, devolve a melhor rota possível em vez de erro. Tratamos isso no backend (a fazer).
+   - Valhalla `exclude_locations`: tenta evitar; se todas as rotas passam pelo ponto, devolve a melhor rota possível em vez de erro. O backend repassa essa rota best-effort normalmente (não há erro a tratar); erros reais do Valhalla viram 502/503 em `routers/rota.py`.
 
 3. **Calibração de Q:** Não temos validação empírica de qual Q reproduz melhor as escolhas de motoristas reais. O paper sugere "ajustável conforme a sensibilidade desejada".

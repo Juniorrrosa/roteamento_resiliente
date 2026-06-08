@@ -18,22 +18,29 @@ Sistema de roteamento urbano para São Paulo que evita pontos de alagamento em t
         
 - data
 
-    Deve-se criar essa pasta 'data' na raiz do projeto contendo o arquivo OpenStreetMap (.pbf). Nesse projeto foi utilizado o `sudeste-latest.osm.pbf`
+    Deve-se criar essa pasta 'data' na raiz do projeto contendo o arquivo OpenStreetMap (.pbf). Nesse projeto é utilizado o `sao-paulo.osm.pbf` — um recorte da **região metropolitana de São Paulo** (bbox `-47.05,-24.05,-46.15,-23.25`).
     
-    - sudeste-latest.osm.pbf
+    - sao-paulo.osm.pbf
         
-        Esse arquivo é a malha da localidade que queremos utilizar o valhalla. Sendo representada somente pela região sudeste nesse projeto. Após rodar o build deverá criar automaticamente as pastas tiles, valhalla e valhalla.json
+        Esse arquivo é a malha da localidade que o Valhalla utiliza. Cobre a capital + conurbação (Guarulhos, Osasco, ABC, etc.). Após rodar o build, são criadas automaticamente as pastas tiles, valhalla e valhalla.json.
         
-        Para baixar demais localidades, visite: [https://download.geofabrik.de/](https://download.geofabrik.de/south-america/brazil.html) 
+        O Geofabrik só fatia o Brasil em macrorregiões (Sudeste, Sul, ...), sem recorte estadual/municipal. Para gerar o recorte de SP, baixe o `sudeste-latest.osm.pbf` de [download.geofabrik.de](https://download.geofabrik.de/south-america/brazil.html) e recorte com o `osmium`:
         
-        > Sempre que baixar uma nova localidade, Rode o build novamente com a região desejada dentro da pasta ‘data’ e aponte devidamente no arquivo `docker-compose.build.yml`
+        ```powershell
+        cd data
+        docker run --rm -v ${PWD}:/data stefda/osmium-tool `
+          osmium extract -b -47.05,-24.05,-46.15,-23.25 --strategy smart `
+          /data/sudeste-latest.osm.pbf -o /data/sao-paulo.osm.pbf
+        ```
+        
+        > Para mudar a área de cobertura, ajuste a bbox acima (ou use outra região do Geofabrik), regenere o `.pbf` e rode o build novamente apontando pro arquivo no `docker-compose.build.yml`. Após o rebuild, reinjete os pesos com `python scripts/refresh_traffic.py --force-backup`.
         >
 > 📖 **Documentação completa em [`docs/`](docs/README.md)** — visão geral, arquitetura, evidências da fidelidade ao paper, infraestrutura, pipeline, API, decisões técnicas e roadmap.
 
 ## Quick start
 
 ```powershell
-# 1. infra base (Valhalla + PostGIS)
+# 1. infra base (Valhalla + PostGIS + Backend FastAPI)
 cd runtime
 Copy-Item .env.example .env       # edite a senha
 docker compose up -d
@@ -45,9 +52,13 @@ python -m venv scripts\.venv
 
 # 3. injetar pesos historicos (h(e) -> velocidade penalizada nos tiles)
 .\scripts\.venv\Scripts\python.exe scripts\refresh_traffic.py
+
+# 4. (opcional) geocoder Nominatim e scraper do CGE
+docker compose --profile geocoding up -d nominatim   # 1a vez: import ~3 min
+docker compose --profile scraper run --rm scraper run --once
 ```
 
-Após esses passos, o motor de rota está em `http://localhost:8002`. Exemplo de request em [docs/06-api-valhalla.md](docs/06-api-valhalla.md).
+Após esses passos: motor de rota em `http://localhost:8002`, API em `http://localhost:8000` (`/health`, `/rota`, ...). Exemplos de request em [docs/06-api-valhalla.md](docs/06-api-valhalla.md).
 
 ## Estrutura do projeto
 
@@ -59,9 +70,9 @@ Após esses passos, o motor de rota está em `http://localhost:8002`. Exemplo de
 | `data/` | `.pbf` OSM, tiles do Valhalla, CSVs de tráfego, relatórios. **Não commitado.** |
 | `modelo_py/` | Shapefile histórico + protótipo Python original do paper |
 | `scripts/` | Pipeline ERMAC → Valhalla (`build_traffic_csvs.py`, `refresh_traffic.py`) |
-| `backend/` | (a fazer) Backend FastAPI |
+| `backend/` | ✅ Backend FastAPI (`/rota`, `/alagamentos`, `/geocode`, `/health`) |
+| `scraper/` | ✅ Scraper CGE-SP (Selenium + Nominatim + push snapshot) |
 | `frontend/` | (a fazer) Frontend React + Leaflet |
-| `scraper/` | (a fazer) Scraper CGE-SP adaptado |
 | `infra/` | (a fazer) Configuração de deploy / IaC |
 
 ## Referências

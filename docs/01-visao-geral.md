@@ -46,7 +46,7 @@ Ver detalhes da implementação em [03 — Modelo matemático](03-modelo-matemat
 
 ## Contexto de uso
 
-- **Cobertura geográfica:** Sudeste do Brasil (tiles do Valhalla cobrem a região inteira). Histórico de alagamento, porém, só cobre a Bacia do Tamanduateí / cidade de SP — fora dessa região o roteamento opera sem penalidade histórica (cai em Dijkstra padrão).
+- **Cobertura geográfica:** região metropolitana de São Paulo (recorte RMSP — capital + conurbação: Guarulhos, Osasco, ABC, etc.). Histórico de alagamento e dados do CGE cobrem a cidade de SP — fora dessa região o roteamento opera sem penalidade histórica (cai em Dijkstra padrão).
 - **Modo de operação atual:** scraper CGE em modo **batch** (manual). A versão de produção futura terá polling automático — ver [09 — Roadmap](09-roadmap.md).
 - **Quem usa:** equipes de emergência, defesa civil, motoristas durante eventos de chuva. Cidadão acessa via frontend (a construir).
 

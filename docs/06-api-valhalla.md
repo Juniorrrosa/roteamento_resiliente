@@ -206,7 +206,7 @@ Usado pelo healthcheck do compose.
 
 ## Limites e gotchas
 
-- **Timeouts:** para Sudeste inteiro, requests muito longas (>500 km) podem demorar segundos. O `valhalla_service` tem 1 worker por padrão (`valhalla_service /data/valhalla.json 1`) — para produção, aumentar.
+- **Timeouts:** no recorte da RMSP as rotas são curtas (cabem na metrópole) e respondem em ~10-100 ms. O `valhalla_service` tem 1 worker por padrão (`valhalla_service /data/valhalla.json 1`) — para produção, aumentar.
 - **Concorrência:** ajustar workers em produção (`docker run ... 4` para 4 workers).
 - **`alternates` máx:** 3. Pedir mais não dá erro, mas pode devolver menos do que pedido.
 - **`exclude_polygons`:** alternativa a `exclude_locations` para áreas (em vez de pontos). Pode ser útil para zonas inundadas grandes — verificar a sintaxe na doc oficial se for usar.

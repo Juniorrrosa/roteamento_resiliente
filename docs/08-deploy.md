@@ -8,20 +8,24 @@
 |---|---|---|
 | CPU | 4 cores | 8+ cores |
 | RAM | 8 GB | 16–32 GB (Valhalla + Nominatim + Postgres) |
-| Disco | 20 GB | **200 GB SSD** (Nominatim sozinho ocupa ~124 GB — 14 GB de Postgres + 110 GB de flatnode) |
+| Disco | 20 GB | **20 GB SSD** (Nominatim na RMSP sem flatnode ~3-5 GB; tiles + pbf ~0.5 GB) |
 | OS | Linux/macOS/Windows com Docker Desktop | Linux com Docker Engine |
 | Docker | 24+ com Compose v2 | 24+ |
 
 ## Fluxo de deploy do zero
 
 1. **Clonar o repo** e configurar Git
-2. **Baixar o .pbf** do Geofabrik (uma vez):
+2. **Gerar o .pbf da RMSP** (uma vez) — baixar o Sudeste e recortar com `osmium`:
    ```bash
-   mkdir -p data
-   curl -L -o data/sudeste-latest.osm.pbf \
+   mkdir -p data && cd data
+   curl -L -o sudeste-latest.osm.pbf \
         https://download.geofabrik.de/south-america/brazil/sudeste-latest.osm.pbf
+   docker run --rm -v "$PWD":/data stefda/osmium-tool \
+        osmium extract -b -47.05,-24.05,-46.15,-23.25 --strategy smart \
+        /data/sudeste-latest.osm.pbf -o /data/sao-paulo.osm.pbf
+   rm sudeste-latest.osm.pbf && cd ..
    ```
-3. **Build dos tiles do Valhalla** (uma vez, ~10–30 min):
+3. **Build dos tiles do Valhalla** (uma vez, ~3–4 min):
    ```bash
    cd build && docker compose -f docker-compose.build.yml up && cd ..
    ```
@@ -43,7 +47,7 @@
    ```bash
    ./scripts/.venv/bin/python scripts/refresh_traffic.py
    ```
-8. **(Opcional) Subir Nominatim** (import ~3-4h para Sudeste; ocupa ~124 GB depois — 14 GB de Postgres + 110 GB de flatnode):
+8. **(Opcional) Subir Nominatim** (import de **alguns minutos** para a RMSP; ocupa ~3-5 GB — **sem** o volume flatnode, ver [Quirk #7](07-quirks-e-decisoes.md)):
    ```bash
    cd runtime && docker compose --profile geocoding up -d nominatim
    docker logs -f nominatim
@@ -90,7 +94,7 @@ Recomendado: backup diário automático via cron + rotação de 7–30 dias.
 
 ### Nominatim
 
-O volume `nominatim_data` é o mais crítico (horas de import). Para snapshot:
+O volume `nominatim_data` (~4 GB) guarda o import (~3 min p/ a RMSP — reimportar é barato). Para snapshot:
 
 ```bash
 docker run --rm -v roteamento-resiliente_nominatim_data:/data -v $(pwd):/backup alpine \

@@ -7,5 +7,5 @@ services:
     command: >
       bash -c "
       valhalla_build_config --mjolnir-tile-dir /data/tiles > /data/valhalla.json &&
-      valhalla_build_tiles -c /data/valhalla.json /data/sudeste-latest.osm.pbf
+      valhalla_build_tiles -c /data/valhalla.json /data/sao-paulo.osm.pbf
       "

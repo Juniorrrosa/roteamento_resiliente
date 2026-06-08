@@ -65,9 +65,9 @@ Montar **apenas o arquivo .pbf** num caminho **fora de `/nominatim/`**:
 
 ```yaml
 volumes:
-  - ../data/sudeste-latest.osm.pbf:/pbf/sudeste-latest.osm.pbf:ro   # <- fora de /nominatim/
+  - ../data/sao-paulo.osm.pbf:/pbf/sao-paulo.osm.pbf:ro   # <- fora de /nominatim/
 environment:
-  PBF_PATH: /pbf/sudeste-latest.osm.pbf
+  PBF_PATH: /pbf/sao-paulo.osm.pbf
 ```
 
 Assim o `chown -R /nominatim` não toca no arquivo (que é read-only por causa do mount).
@@ -126,6 +126,25 @@ No Windows PowerShell 5.1, redirecionar stderr de exe nativos (docker, valhalla_
 
 Solução: **não use `2>&1`** com executáveis nativos no PowerShell. Deixe stderr ir naturalmente. Se precisar capturar, use no Bash via `docker exec <c> bash -c "... 2>&1"` (o redirect é interpretado dentro do bash do container, não no PowerShell).
 
+## Quirk #7 — Nominatim: o flatnode ocupa ~110 GB independente do tamanho do recorte
+
+### O sintoma
+Trocamos o `.pbf` do Sudeste (799 MB) por um recorte da RMSP (137 MB) esperando que o Nominatim encolhesse proporcionalmente. O Postgres encolheu (14 GB → ~3 GB), mas o `nominatim_flatnode` continuou em **~103 GB reais** (arquivo totalmente alocado, não esparso).
+
+### A causa
+O `flatnode.file` do osm2pgsql é um array indexado pelo **maior node ID global do OSM** (~13,7 bilhões), a 8 bytes por slot → ~110 GB. O tamanho depende do espaço de IDs do OSM, **não** da quantidade de dados do recorte. Um extrato pequeno preserva os IDs globais originais, então o flatnode fica do mesmo tamanho.
+
+### A correção
+A imagem `mediagis/nominatim` só ativa o flatnode **se existir o diretório `/nominatim/flatnode`** (lógica em `/app/config.sh`):
+
+```bash
+if [ -d "${PROJECT_DIR}/flatnode" ]; then sed -i 's|...NOMINATIM_FLATNODE_FILE=...="/nominatim/flatnode/flatnode.file"|' ...; fi
+```
+
+Basta **não montar** o volume `nominatim_flatnode`. Sem o diretório, `NOMINATIM_FLATNODE_FILE` fica vazio e o osm2pgsql guarda as coordenadas dos nós nas slim tables do Postgres — para a RMSP isso é pequeno (total do Nominatim cai para ~3-5 GB).
+
+O flatnode só compensa em imports grandes (planeta/continente), onde o overhead de I/O do Postgres para bilhões de nós seria proibitivo. Para recortes urbanos, **não use flatnode**.
+
 ## Decisões registradas
 
 ### Por que Valhalla e não NetworkX?
@@ -133,10 +152,10 @@ Solução: **não use `2>&1`** com executáveis nativos no PowerShell. Deixe std
 O `modelo_py/novo_modelo.py` original usa OSMnx + NetworkX + A* (sem Valhalla). Razão: protótipo acadêmico que opera numa bbox pequena de SP. Para produção:
 
 - NetworkX em SP inteira é lento (segundos por rota)
-- Valhalla em Sudeste inteiro é rápido (~10-100ms por rota)
+- Valhalla na região metropolitana é rápido (~10-100ms por rota)
 - A fórmula ERMAC é representável no Valhalla com fidelidade — ver [03 — Modelo matemático](03-modelo-matematico.md)
 
-Decisão: Valhalla (1 container, escopo Sudeste).
+Decisão: Valhalla (1 container, escopo região metropolitana de SP).
 
 ### Por que 1 container Valhalla e não 2 (dry/wet)?
 
