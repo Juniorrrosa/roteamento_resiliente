@@ -1,6 +1,6 @@
 # 04 — Infraestrutura
 
-Tudo é orquestrado por `runtime/docker-compose.yml`. Cinco serviços, dois atrás de profile.
+Tudo é orquestrado por `runtime/docker-compose.yml`. Seis serviços, dois atrás de profile.
 
 ## Serviços
 
@@ -8,7 +8,8 @@ Tudo é orquestrado por `runtime/docker-compose.yml`. Cinco serviços, dois atr�
 |---|---|---|---|---|
 | `valhalla` | `ghcr.io/valhalla/valhalla:latest` | 8002 | ✅ | `../data:/data` |
 | `postgis` | `postgis/postgis:16-3.4` | 5432 | ✅ | `postgis_data` + `./initdb` |
-| `backend` | build `../backend` (FastAPI) | 8000 | ✅ | — |
+| `backend` | build `../backend` (FastAPI) | 8000 | ✅ | `../data:/data:ro` (hotspots) |
+| `frontend` | build `../frontend` (nginx+React) | 3000 | ✅ | — |
 | `nominatim` | `mediagis/nominatim:4.4` | 8080 | ❌ (profile `geocoding`) | só o `.pbf` montado + `nominatim_data` (sem flatnode) |
 | `scraper` | build `../scraper` (CGE-SP) | — | ❌ (profile `scraper`, batch) | — |
 
@@ -62,6 +63,8 @@ Cada serviço expõe um healthcheck. `docker compose up -d` retorna assim que os
 |---|---|---|
 | valhalla | `wget http://localhost:8002/status` | ~30s (carrega tiles em RAM) |
 | postgis | `pg_isready -U $USER -d $DB` | ~10s |
+| backend | `urlopen http://localhost:8000/health` | ~20s (depende de valhalla+postgis healthy) |
+| frontend | `wget http://localhost:80/` | ~10s |
 | nominatim | `curl http://localhost:8080/status` | **~3 min** durante o import inicial (RMSP); depois ~60s |
 
 Durante o import inicial do Nominatim, o status fica `unhealthy` mas o container está rodando normalmente. **Não reiniciar** — vai recomeçar do zero. Acompanhe via `docker logs -f nominatim`.
@@ -130,6 +133,7 @@ Todos os serviços usam a rede nomeada `roteamento` (compose nomeia automaticame
 - `valhalla:8002`
 - `postgis:5432`
 - `backend:8000`
+- `frontend:80` (publicado em `localhost:3000`; proxia `/api` → `backend:8000`)
 - `nominatim:8080`
 
 O backend FastAPI (no compose) usa esses hostnames internos. Para acesso externo (testes manuais), use `localhost:<porta>`.
@@ -143,6 +147,7 @@ Valores aproximados com o recorte da RMSP (tiles de 128 MB, bem menores que o Su
 | valhalla | ~0.3-0.5 GB | ~0.5-1 GB (tile cache) | baixa, picos no /route |
 | postgis | ~200 MB | até `shared_buffers` | baixa |
 | backend | ~150 MB | ~150-300 MB | baixa |
+| frontend | ~10 MB | ~10-20 MB (nginx estático) | desprezível |
 | nominatim | ~500 MB | 1-2 GB | alta durante import (~3 min), baixa depois |
 
 Em uma máquina de dev (8 GB RAM): tudo cabe com folga. Em produção: dimensionar conforme volume de requisições.

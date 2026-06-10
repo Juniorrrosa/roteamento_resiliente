@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.nominatim import client as nominatim_singleton, get_client as get_nominatim
-from app.routers import alagamentos, geocode, health, rota
+from app.routers import alagamentos, geocode, health, hotspots, rota
 from app.valhalla import client as valhalla_singleton, get_client as get_valhalla
 
 logging.basicConfig(
@@ -56,3 +56,4 @@ app.include_router(health.router)
 app.include_router(geocode.router)
 app.include_router(alagamentos.router)
 app.include_router(rota.router)
+app.include_router(hotspots.router)

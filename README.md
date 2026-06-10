@@ -40,7 +40,7 @@ Sistema de roteamento urbano para São Paulo que evita pontos de alagamento em t
 ## Quick start
 
 ```powershell
-# 1. infra base (Valhalla + PostGIS + Backend FastAPI)
+# 1. infra base (Valhalla + PostGIS + Backend FastAPI + Frontend)
 cd runtime
 Copy-Item .env.example .env       # edite a senha
 docker compose up -d
@@ -58,7 +58,7 @@ docker compose --profile geocoding up -d nominatim   # 1a vez: import ~3 min
 docker compose --profile scraper run --rm scraper run --once
 ```
 
-Após esses passos: motor de rota em `http://localhost:8002`, API em `http://localhost:8000` (`/health`, `/rota`, ...). Exemplos de request em [docs/06-api-valhalla.md](docs/06-api-valhalla.md).
+Após esses passos: **interface web em `http://localhost:3000`**, API em `http://localhost:8000` (`/health`, `/rota`, ...), motor de rota em `http://localhost:8002`. Exemplos de request em [docs/06-api-valhalla.md](docs/06-api-valhalla.md).
 
 ## Estrutura do projeto
 
@@ -72,7 +72,7 @@ Após esses passos: motor de rota em `http://localhost:8002`, API em `http://loc
 | `scripts/` | Pipeline ERMAC → Valhalla (`build_traffic_csvs.py`, `refresh_traffic.py`) |
 | `backend/` | ✅ Backend FastAPI (`/rota`, `/alagamentos`, `/geocode`, `/health`) |
 | `scraper/` | ✅ Scraper CGE-SP (Selenium + Nominatim + push snapshot) |
-| `frontend/` | (a fazer) Frontend React + Leaflet |
+| `frontend/` | ✅ Frontend React + Vite + Leaflet (nginx, proxy `/api`) |
 | `infra/` | (a fazer) Configuração de deploy / IaC |
 
 ## Referências

@@ -4,10 +4,11 @@
 
 ```
                       ┌─────────────────┐
-                      │ Frontend (TODO) │
+                      │ Frontend ✓      │
                       │ React + Leaflet │
+                      │ (nginx :3000)   │
                       └────────┬────────┘
-                               │ HTTP REST
+                               │ HTTP REST (/api → backend)
                                ▼
                       ┌─────────────────┐
                       │ Backend ✓       │
@@ -76,13 +77,17 @@
 
 - Imagem própria (`backend/Dockerfile`, python:3.12-slim), sobe no `docker compose up` padrão na porta 8000
 - Stack: FastAPI + SQLAlchemy 2 + asyncpg (PostGIS) + httpx (Valhalla/Nominatim) + pydantic v2
-- Endpoints: `POST /rota`, `GET/POST /alagamentos` (+ `/snapshot`), `POST /geocode`, `GET /health`
+- Endpoints: `POST /rota`, `GET/POST /alagamentos` (+ `/snapshot`), `POST /geocode`, `GET /hotspots`, `GET /health`
 - Traduz `chuva: bool` → `date_time` (quirk #1) e monta `exclude_locations` a partir do PostGIS
 - Detalhes em [06 — API](06-api-valhalla.md)
 
-### Frontend (React + Leaflet) — **a fazer**
+### Frontend (React + Vite + Leaflet) — **implementado** (Etapa 5, MVP core)
 
-Ver [09 — Roadmap](09-roadmap.md).
+- Imagem própria (`frontend/Dockerfile`, multi-stage node→nginx), sobe no `docker compose up` padrão na porta 3000
+- React 18 + Vite + react-leaflet; `@mapbox/polyline` decodifica o shape das rotas (**precisão 6**)
+- nginx serve o build estático e faz **proxy reverso `/api → backend:8000`** (browser não fala direto com o backend, sem CORS)
+- Funcionalidades: origem/destino por endereço, **clique no mapa** ou **GPS**; **4 rotas por condição** (chuva × alagamento) com legenda-controle de visibilidade; camada de **hotspots históricos** (`/hotspots`); alagamentos do CGE; interface responsiva (bottom sheet no mobile)
+- Reverse-geocoding e heatmap contínuo ficaram para depois — ver [09 — Roadmap](09-roadmap.md)
 
 ### Scraper CGE-SP — **implementado** (Etapa 4)
 

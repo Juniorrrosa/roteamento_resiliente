@@ -31,6 +31,10 @@ services:
       ERMAC_Q: "10.0"
       LOG_LEVEL: INFO
       CORS_ORIGINS: "*"
+      HOTSPOTS_CSV: /data/traffic_report/affected_edges.csv
+    volumes:
+      # so-leitura: backend serve os hotspots historicos de affected_edges.csv
+      - ../data:/data:ro
     depends_on:
       valhalla:
         condition: service_healthy
@@ -42,6 +46,25 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    restart: unless-stopped
+    networks:
+      - roteamento
+
+  frontend:
+    build: ../frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1 (nao localhost): nginx escuta so IPv4; localhost resolve ::1 -> refused
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     networks:
       - roteamento

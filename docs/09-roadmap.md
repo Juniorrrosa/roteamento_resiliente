@@ -2,7 +2,7 @@
 
 O que já está pronto, o que falta, e em que ordem fazer.
 
-## Estado atual (2026-05-18)
+## Estado atual (2026-06-10)
 
 ```
 [✓] Etapa 0  — Validação técnica do Valhalla (binários, tiles, traffic.tar)
@@ -10,12 +10,14 @@ O que já está pronto, o que falta, e em que ordem fazer.
 [✓] Etapa 2  — Pipeline ERMAC -> Valhalla (build_traffic_csvs + refresh_traffic)
 [✓] Etapa 3  — Backend FastAPI (/health, /geocode, /alagamentos, /rota)
 [✓] Etapa 4  — Scraper CGE-SP + integração Nominatim + push snapshot
+[✓] Etapa 5  — Frontend (React + Vite + Leaflet) — MVP core (rota + alagamentos)
 [✓] Documentação operacional (esta pasta)
-[ ] Etapa 5  — Frontend (React + Leaflet/MapLibre)
 [ ] Etapa 6  — Modo polling automático do scraper (real-time)
 [ ] Etapa 7  — Monitoramento (Prometheus/Grafana ou equivalente)
 [ ] Etapa 8  — Deploy em ambiente compartilhado
 ```
+
+> Recorte do mapa migrado de Sudeste → **região metropolitana de SP** em 2026-06-08 (ver [04 — Infraestrutura](04-infraestrutura.md) e Quirk #7).
 
 ## Etapa 3 — Backend FastAPI
 
@@ -118,26 +120,34 @@ scraper/
 └── tests/
 ```
 
-## Etapa 5 — Frontend
+## Etapa 5 — Frontend ✅ (MVP core)
 
-Stack sugerida:
+Stack implementada (`frontend/`):
 
-- **React 18 + Vite** ou **Next.js 14** (App Router)
-- **Leaflet** (maduro, simples) ou **MapLibre GL JS** (mais bonito, tiles vetoriais)
-- **TanStack Query** para state server-side
+- **React 18 + Vite** + **react-leaflet/Leaflet**
+- **@mapbox/polyline** para decodificar o shape das rotas (**precisão 6** — ver abaixo)
+- Servido por **nginx** num container (`docker-compose`), com proxy reverso `/api → backend:8000` (sem CORS). Publicado em `localhost:3000`.
 
-### Funcionalidades MVP
+### Funcionalidades entregues
 
-- Input de origem (geocoding via backend `/geocode`)
-- Input de destino (idem)
-- Toggle "está chovendo"
-- Botão "Calcular rota"
-- Mapa com:
-  - Linha da rota principal (azul)
-  - Linhas das alternativas (cinza)
-  - Marcadores dos alagamentos atuais (CGE)
-  - Heatmap dos hotspots históricos (opcional)
-- Painel com: distância, tempo estimado, "evita N alagamentos"
+- **Definir origem/destino** de 3 formas: endereço (geocodado pelo backend), **clique no mapa** (1º origem, 2º destino, 3º reinicia) ou **GPS** ("Minha localização")
+- **4 rotas por condição** (combinações de chuva × alagamento), cada uma em uma cor:
+  - 🟢 sem chuva/sem alagamento (ideal), 🔵 com chuva, 🟠 com alagamento, 🔴 pior caso
+  - O front chama `POST /rota` 4× com `(chuva, evitar_alagamentos)` ∈ {false,true}² (`alternates: 0`)
+  - **Legenda = controle de visibilidade** (clicar liga/desliga a rota); mostra distância/tempo/nº evitados
+  - Sobreposições legíveis via espessuras concêntricas (pior por baixo → ideal por cima)
+  - Requer o param `evitar_alagamentos` no backend (adicionado nesta etapa)
+- **Camada de hotspots históricos** (pesos estáticos) com toggle — círculos coloridos por severidade `h(e)`, servidos por `GET /hotspots` (novo endpoint que lê `affected_edges.csv`)
+- Marcadores dos **alagamentos ativos do CGE** (`GET /alagamentos`)
+- Interface modernizada e **responsiva** (em mobile o painel vira bottom sheet)
+
+> **Atenção ao integrar:** o Valhalla codifica o `shape` com **precisão 6**, não a 5 padrão. Decodificar com `polyline.decode(shape, 6)` — precisão errada distorce a rota. Ver `frontend/src/lib/polyline.js`.
+
+### Deixado para depois
+
+- Heatmap contínuo (hoje os hotspots são círculos por severidade)
+- Reverse-geocoding dos pontos definidos por clique/GPS (hoje usam coordenadas direto)
+- TanStack Query / cache de estado (hoje é `fetch` + `useState`, suficiente para o MVP)
 
 ## Etapa 6 — Polling automático do scraper
 

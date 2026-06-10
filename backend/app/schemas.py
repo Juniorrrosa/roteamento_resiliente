@@ -85,6 +85,10 @@ class RotaRequest(BaseModel):
         default=False,
         description="Se True, aplica peso historico h(e)/Q via date_time diurno",
     )
+    evitar_alagamentos: bool = Field(
+        default=True,
+        description="Se True, exclui (b(e)=inf) os alagamentos ativos do CGE da rota",
+    )
     alternates: int = Field(default=2, ge=0, le=3)
 
 
@@ -102,6 +106,25 @@ class RotaResponse(BaseModel):
     rotas: list[RotaTrecho]
     origem_usada: tuple[float, float]
     destino_usado: tuple[float, float]
+
+
+# ============================================================================
+# Hotspots historicos (pesos estaticos do modelo ERMAC)
+# ============================================================================
+
+class Hotspot(BaseModel):
+    lat: float
+    lng: float
+    h: int = Field(..., description="Severidade: nº de ocorrências históricas na aresta")
+    speed_default: int = Field(..., description="Velocidade livre da via (km/h)")
+    speed_penalizado: int = Field(..., description="Velocidade efetiva sob chuva (km/h)")
+
+
+class HotspotsResponse(BaseModel):
+    total: int
+    max_h: int
+    q: float
+    pontos: list[Hotspot]
 
 
 # ============================================================================

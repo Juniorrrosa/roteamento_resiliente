@@ -58,13 +58,16 @@ async def calcular_rota(
     origem = await _resolve_location(payload.origem, session)
     destino = await _resolve_location(payload.destino, session)
 
-    # 2. carrega alagamentos ativos
-    ativos_db = (
-        await session.scalars(
-            select(Alagamento).where(Alagamento.resolved_at.is_(None))
-        )
-    ).all()
-    excludes = [AlagamentoOut.model_validate(r, from_attributes=True) for r in ativos_db]
+    # 2. carrega alagamentos ativos (somente se for evitar)
+    if payload.evitar_alagamentos:
+        ativos_db = (
+            await session.scalars(
+                select(Alagamento).where(Alagamento.resolved_at.is_(None))
+            )
+        ).all()
+        excludes = [AlagamentoOut.model_validate(r, from_attributes=True) for r in ativos_db]
+    else:
+        excludes = []
 
     # 3. monta payload Valhalla
     body = build_route_payload(

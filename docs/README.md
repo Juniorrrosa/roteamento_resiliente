@@ -23,7 +23,9 @@ Esta pasta contém a documentação operacional e técnica do projeto. Comece pe
 ## Para deploy e roadmap
 
 8. [08 — Deploy](08-deploy.md) — secrets, backups, considerações de produção
-9. [09 — Roadmap](09-roadmap.md) — o que falta (backend FastAPI, scraper CGE, frontend)
+9. [09 — Roadmap](09-roadmap.md) — o que já está pronto (Etapas 0–5: infra, pipeline, backend, scraper, frontend) e o que falta (polling, monitoramento, deploy)
+
+> Cada componente tem seu próprio README: [`backend/`](../backend/README.md), [`frontend/`](../frontend/README.md), [`scraper/`](../scraper/README.md).
 
 ---
 
@@ -32,7 +34,7 @@ Esta pasta contém a documentação operacional e técnica do projeto. Comece pe
 Pré-requisitos: Docker Desktop em execução, Python 3.11+, ~5 GB de disco livre.
 
 ```powershell
-# 1. subir a infra (Valhalla + PostGIS)
+# 1. subir a infra (Valhalla + PostGIS + Backend + Frontend)
 cd runtime
 Copy-Item .env.example .env       # edite a senha se for ambiente compartilhado
 docker compose up -d
@@ -45,7 +47,14 @@ python -m venv scripts\.venv
 # 3. gerar e injetar pesos historicos (h(e) -> velocidade penalizada)
 .\scripts\.venv\Scripts\python.exe scripts\refresh_traffic.py
 
-# 4. testar uma rota
+# 4. (opcional) geocoder Nominatim + coletar alagamentos do CGE
+docker compose --profile geocoding up -d nominatim
+docker compose --profile scraper run --rm scraper run --once
+```
+
+Pronto: **interface web em `http://localhost:3000`**, API em `http://localhost:8000`, motor de rota em `http://localhost:8002`. Para testar o motor direto:
+
+```powershell
 curl -X POST http://localhost:8002/route -H "Content-Type: application/json" `
   -d '{\"locations\":[{\"lat\":-23.5695,\"lon\":-46.6080},{\"lat\":-23.5675,\"lon\":-46.6078}],\"costing\":\"auto\",\"date_time\":{\"type\":1,\"value\":\"2026-05-18T13:00\"}}'
 ```

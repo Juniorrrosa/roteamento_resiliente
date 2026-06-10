@@ -48,7 +48,7 @@ Ver detalhes da implementação em [03 — Modelo matemático](03-modelo-matemat
 
 - **Cobertura geográfica:** região metropolitana de São Paulo (recorte RMSP — capital + conurbação: Guarulhos, Osasco, ABC, etc.). Histórico de alagamento e dados do CGE cobrem a cidade de SP — fora dessa região o roteamento opera sem penalidade histórica (cai em Dijkstra padrão).
 - **Modo de operação atual:** scraper CGE em modo **batch** (manual). A versão de produção futura terá polling automático — ver [09 — Roadmap](09-roadmap.md).
-- **Quem usa:** equipes de emergência, defesa civil, motoristas durante eventos de chuva. Cidadão acessa via frontend (a construir).
+- **Quem usa:** equipes de emergência, defesa civil, motoristas durante eventos de chuva. Cidadão acessa via **frontend web** (mapa interativo em `localhost:3000` — ver [09 — Roadmap](09-roadmap.md), Etapa 5).
 
 ## O que NÃO é objetivo
 

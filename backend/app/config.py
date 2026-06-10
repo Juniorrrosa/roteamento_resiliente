@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     ermac_q: float = 10.0
     log_level: str = "INFO"
     cors_origins: str = "*"
+    hotspots_csv: str = Field(
+        default="/data/traffic_report/affected_edges.csv",
+        description="CSV de arestas afetadas (hotspots historicos) gerado pelo pipeline ERMAC",
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:
