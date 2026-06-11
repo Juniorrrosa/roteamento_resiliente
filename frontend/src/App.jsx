@@ -62,6 +62,14 @@ export default function App() {
     setVisiveis((v) => ({ ...v, [key]: !v[key] }));
   }
 
+  function onLimpar() {
+    setOrigem(null);
+    setDestino(null);
+    setRotas(SEM_ROTAS);
+    setVisiveis(TODAS_VISIVEIS);
+    setErro(null);
+  }
+
   // --- cálculo: as 4 condições em paralelo ---
   async function onCalcular() {
     const o = toApiLocation(origem);
@@ -122,6 +130,8 @@ export default function App() {
             onClearDestino={() => setDestino(null)}
             onGps={onGps}
             onCalcular={onCalcular}
+            onLimpar={onLimpar}
+            temAlgo={Boolean(origem || destino || temResultado)}
             loading={loading}
           />
 
@@ -146,6 +156,12 @@ export default function App() {
         </aside>
 
         <main className="map-wrap">
+          {loading && (
+            <div className="map-loading">
+              <div className="spinner" />
+              <span>Calculando rotas…</span>
+            </div>
+          )}
           <MapView
             rotas={rotas}
             visiveis={visiveis}

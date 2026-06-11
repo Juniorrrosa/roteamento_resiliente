@@ -134,11 +134,14 @@ Stack implementada (`frontend/`):
 - **4 rotas por condição** (combinações de chuva × alagamento), cada uma em uma cor:
   - 🟢 sem chuva/sem alagamento (ideal), 🔵 com chuva, 🟠 com alagamento, 🔴 pior caso
   - O front chama `POST /rota` 4× com `(chuva, evitar_alagamentos)` ∈ {false,true}² (`alternates: 0`)
-  - **Legenda = controle de visibilidade** (clicar liga/desliga a rota); mostra distância/tempo/nº evitados
+  - **Legenda = controle de visibilidade** (clicar liga/desliga a rota); mostra distância e tempo
   - Sobreposições legíveis via espessuras concêntricas (pior por baixo → ideal por cima)
   - Requer o param `evitar_alagamentos` no backend (adicionado nesta etapa)
 - **Camada de hotspots históricos** (pesos estáticos) com toggle — círculos coloridos por severidade `h(e)`, servidos por `GET /hotspots` (novo endpoint que lê `affected_edges.csv`)
 - Marcadores dos **alagamentos ativos do CGE** (`GET /alagamentos`)
+- **Pinos** de origem (verde) e destino (roxo) em formato de gota
+- **Seletor de mapa base** com miniaturas de preview: OSM, Claro (CartoDB), Escuro (CartoDB), Satélite (Esri)
+- Mimos: botão **Limpar**, overlay **"Calculando…"**, barra de **escala**, controles de **zoom**
 - Interface modernizada e **responsiva** (em mobile o painel vira bottom sheet)
 
 > **Atenção ao integrar:** o Valhalla codifica o `shape` com **precisão 6**, não a 5 padrão. Decodificar com `polyline.decode(shape, 6)` — precisão errada distorce a rota. Ver `frontend/src/lib/polyline.js`.

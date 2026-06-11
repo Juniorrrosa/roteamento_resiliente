@@ -58,8 +58,59 @@ body {
   background: var(--panel);
   border-right: 1px solid var(--border);
 }
-.map-wrap { flex: 1; min-width: 0; }
+.map-wrap { flex: 1; min-width: 0; position: relative; }
+.map-shell { position: relative; height: 100%; width: 100%; }
 .map { height: 100%; width: 100%; background: #dfe3e8; }
+
+/* ---------- Seletor de mapa base (miniaturas) ---------- */
+.basemaps {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 800;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(3px);
+}
+.bm-thumb {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  background-color: #dfe3e8;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.bm-thumb:hover { transform: scale(1.04); }
+.bm-thumb.active { border-color: var(--accent); }
+.bm-current { width: 64px; height: 64px; border-color: #fff; }
+.bm-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.65));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 820px) {
+  .bm-thumb { width: 52px; height: 52px; }
+  .bm-current { width: 56px; height: 56px; }
+}
 
 /* ---------- Form ---------- */
 .form { display: flex; flex-direction: column; gap: 12px; }
@@ -178,4 +229,80 @@ body {
     width: 40px; height: 4px; border-radius: 999px; background: #ccd2da;
   }
   .sidebar.closed { transform: translateY(100%); }
+}
+
+/* ---------- Pinos origem/destino ---------- */
+.pin-icon {
+  background: transparent;
+  border: none;
+}
+.pin-icon svg {
+  filter: drop-shadow(0 3px 4px rgba(16, 24, 40, 0.35));
+}
+
+/* ---------- Overlay "calculando" ---------- */
+.map-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(1.5px);
+  font-weight: 600;
+  color: #11335b;
+  pointer-events: none;
+}
+.spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid rgba(25, 113, 194, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Refino dos controles do Leaflet ---------- */
+.leaflet-bar,
+.leaflet-control-layers,
+.leaflet-control-scale-line {
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: var(--shadow) !important;
+}
+.leaflet-bar a {
+  border-radius: 0 !important;
+  color: var(--text) !important;
+}
+.leaflet-bar a:first-child { border-radius: 10px 10px 0 0 !important; }
+.leaflet-bar a:last-child { border-radius: 0 0 10px 10px !important; }
+.leaflet-control-layers {
+  padding: 6px 8px !important;
+  font-size: 13px;
+}
+.leaflet-control-layers-toggle { border-radius: 10px !important; }
+.leaflet-control-scale-line {
+  padding: 2px 8px !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Tooltips e popups mais limpos */
+.leaflet-tooltip {
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-size: 12.5px;
+  padding: 6px 9px;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  box-shadow: var(--shadow);
 }

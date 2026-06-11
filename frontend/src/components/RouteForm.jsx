@@ -12,6 +12,8 @@ export default function RouteForm({
   onClearDestino,
   onGps,
   onCalcular,
+  onLimpar,
+  temAlgo,
   loading,
 }) {
   const podeCalcular = Boolean(origem) && Boolean(destino) && !loading;
@@ -44,6 +46,9 @@ export default function RouteForm({
       <div className="form-actions">
         <button type="button" className="btn-ghost" onClick={onGps} title="Usar minha localização">
           📍 Minha localização
+        </button>
+        <button type="button" className="btn-ghost" onClick={onLimpar} disabled={!temAlgo} title="Limpar tudo">
+          🗑️ Limpar
         </button>
       </div>
 

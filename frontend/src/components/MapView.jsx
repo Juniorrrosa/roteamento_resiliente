@@ -1,16 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
   Polyline,
   CircleMarker,
+  Marker,
   Tooltip,
+  ScaleControl,
   useMap,
   useMapEvents,
 } from "react-leaflet";
 import { decodeShape } from "../lib/polyline.js";
 import { MARKER, hotspotColor } from "../lib/colors.js";
 import { DRAW_ORDER } from "../lib/scenarios.js";
+import { PIN_ORIGEM, PIN_DESTINO } from "../lib/icons.js";
+import { BASEMAPS } from "../lib/basemaps.js";
+import BaseMapSwitcher from "./BaseMapSwitcher.jsx";
 
 const SP_CENTER = [-23.5505, -46.6333];
 
@@ -53,6 +58,8 @@ export default function MapView({
   flyTarget,
   onMapClick,
 }) {
+  const [baseId, setBaseId] = useState("osm");
+
   // Camadas das rotas: mais grossas por baixo (DRAW_ORDER), só as visíveis.
   const layers = DRAW_ORDER.filter((s) => visiveis[s.key] && rotas[s.key]?.rotas?.[0]).map((s) => ({
     key: s.key,
@@ -69,13 +76,14 @@ export default function MapView({
     destino?.lat != null ? [destino.lat, destino.lng] : algumResultado?.destino_usado ?? null;
 
   const fitPoints = layers.flatMap((l) => l.coords);
+  const base = BASEMAPS.find((b) => b.id === baseId) ?? BASEMAPS[0];
 
   return (
-    <MapContainer center={SP_CENTER} zoom={12} className="map" preferCanvas>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <div className="map-shell">
+      <MapContainer center={SP_CENTER} zoom={12} className="map" preferCanvas>
+        <TileLayer key={base.id} attribution={base.attribution} url={base.url} />
+
+        <ScaleControl position="bottomleft" imperial={false} />
 
       <ClickHandler onMapClick={onMapClick} />
       <FlyTo target={flyTarget} />
@@ -129,19 +137,20 @@ export default function MapView({
         </CircleMarker>
       ))}
 
-      {/* Origem / destino (neutros, para não confundir com as cores das rotas) */}
+      {/* Origem (pino verde) / destino (pino roxo) */}
       {origemPt && (
-        <CircleMarker center={origemPt} radius={9}
-          pathOptions={{ color: "#fff", weight: 3, fillColor: MARKER.origem, fillOpacity: 1 }}>
-          <Tooltip permanent direction="top">Origem</Tooltip>
-        </CircleMarker>
+        <Marker position={origemPt} icon={PIN_ORIGEM}>
+          <Tooltip direction="top">Origem</Tooltip>
+        </Marker>
       )}
       {destinoPt && (
-        <CircleMarker center={destinoPt} radius={9}
-          pathOptions={{ color: "#fff", weight: 3, fillColor: MARKER.destino, fillOpacity: 1 }}>
-          <Tooltip permanent direction="top">Destino</Tooltip>
-        </CircleMarker>
+        <Marker position={destinoPt} icon={PIN_DESTINO}>
+          <Tooltip direction="top">Destino</Tooltip>
+        </Marker>
       )}
-    </MapContainer>
+      </MapContainer>
+
+      <BaseMapSwitcher value={baseId} onChange={setBaseId} />
+    </div>
   );
 }

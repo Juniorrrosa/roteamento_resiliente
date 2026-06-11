@@ -86,7 +86,7 @@
 - Imagem própria (`frontend/Dockerfile`, multi-stage node→nginx), sobe no `docker compose up` padrão na porta 3000
 - React 18 + Vite + react-leaflet; `@mapbox/polyline` decodifica o shape das rotas (**precisão 6**)
 - nginx serve o build estático e faz **proxy reverso `/api → backend:8000`** (browser não fala direto com o backend, sem CORS)
-- Funcionalidades: origem/destino por endereço, **clique no mapa** ou **GPS**; **4 rotas por condição** (chuva × alagamento) com legenda-controle de visibilidade; camada de **hotspots históricos** (`/hotspots`); alagamentos do CGE; interface responsiva (bottom sheet no mobile)
+- Funcionalidades: origem/destino por endereço, **clique no mapa** ou **GPS** (pinos verde/roxo); **4 rotas por condição** (chuva × alagamento) com legenda-controle de visibilidade; camada de **hotspots históricos** (`/hotspots`); alagamentos do CGE; **seletor de mapa base** com miniaturas (OSM/Claro/Escuro/Satélite); botão Limpar, overlay de carregamento, escala; interface responsiva (bottom sheet no mobile)
 - Reverse-geocoding e heatmap contínuo ficaram para depois — ver [09 — Roadmap](09-roadmap.md)
 
 ### Scraper CGE-SP — **implementado** (Etapa 4)

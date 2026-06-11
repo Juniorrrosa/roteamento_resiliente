@@ -5,7 +5,7 @@ Interface web (MVP) para calcular rotas que evitam alagamentos em São Paulo.
 ## Stack
 
 - **React 18 + Vite**
-- **react-leaflet / Leaflet** (mapa, tiles OpenStreetMap)
+- **react-leaflet / Leaflet** (mapa; 4 bases: OSM, Claro, Escuro, Satélite)
 - **@mapbox/polyline** para decodificar o `shape` das rotas
 
 > ⚠️ O Valhalla codifica o `shape` com **precisão 6** (não a 5 padrão). Decodificamos com `polyline.decode(shape, 6)` em [`src/lib/polyline.js`](src/lib/polyline.js) — precisão errada distorce a rota no mapa.
@@ -50,10 +50,14 @@ npm run dev                     # http://localhost:3000
   | 🟠 laranja | não | sim |
   | 🔴 vermelho | sim | sim (pior caso) |
   - A **legenda é o controle de visibilidade**: clicar liga/desliga cada rota no mapa
-  - Cada item mostra **distância, tempo** e nº de alagamentos evitados
+  - Cada item mostra **distância e tempo** estimados
   - Sobreposições legíveis via **espessuras concêntricas** (pior por baixo → ideal por cima)
 - Camada de **hotspots históricos** (pesos estáticos) com toggle, círculos coloridos por severidade `h(e)`
 - Marcadores de **alagamentos do CGE** em tempo real
+- **Pinos** de origem (verde) e destino (roxo) em formato de gota
+- **Seletor de mapa base** com miniaturas de preview (OSM · Claro · Escuro · Satélite) — colapsável no canto superior direito
+- Botão **Limpar**, overlay **"Calculando…"**, barra de **escala** e controles de **zoom**
+- Interface **responsiva** (em mobile o painel vira *bottom sheet*)
 
 ## Endpoints consumidos
 
@@ -73,12 +77,15 @@ src/
 │   ├── polyline.js            # decode precisão 6
 │   ├── format.js              # km/min/coord + toApiLocation
 │   ├── colors.js              # cores de marcadores + rampa de hotspots
-│   └── scenarios.js           # os 4 cenários (chuva × alagamento): cor, espessura, flags
+│   ├── scenarios.js           # os 4 cenários (chuva × alagamento): cor, espessura, flags
+│   ├── icons.js               # pinos SVG (origem verde / destino roxo) via divIcon
+│   └── basemaps.js            # 4 bases de mapa + tiles de preview de SP
 ├── components/
-│   ├── MapView.jsx            # mapa, clique, GPS flyTo, 4 rotas concêntricas, hotspots (canvas)
+│   ├── MapView.jsx            # mapa, clique, GPS flyTo, 4 rotas, hotspots, base, escala
 │   ├── PointInput.jsx         # campo de ponto (endereço OU chip de mapa/GPS)
-│   ├── RouteForm.jsx          # origem/destino + GPS + botão
-│   └── RoutesPanel.jsx        # legenda-controle das 4 rotas (toggle + métricas)
+│   ├── RouteForm.jsx          # origem/destino + GPS + Limpar + Calcular
+│   ├── RoutesPanel.jsx        # legenda-controle das 4 rotas (toggle + métricas)
+│   └── BaseMapSwitcher.jsx    # seletor de mapa base com miniaturas
 └── styles.css
 ```
 

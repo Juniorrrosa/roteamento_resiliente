@@ -1,10 +1,10 @@
 // Cores dos marcadores e da rampa de hotspots.
 // As cores das 4 rotas ficam em scenarios.js.
 
-// Origem/destino em tons neutros para não competir com as cores das rotas.
+// Origem (verde) e destino (roxo) — mesmas cores dos pinos no mapa (ver lib/icons.js).
 export const MARKER = {
-  origem: "#111827",
-  destino: "#6b7280",
+  origem: "#2f9e44",
+  destino: "#7048e8",
   alagamento: "#e03131",
 };
 
