@@ -35,23 +35,26 @@ Esta pasta contém a documentação operacional e técnica do projeto. Comece pe
 
 ## Quick start (TL;DR)
 
-Pré-requisitos: Docker Desktop em execução, Python 3.11+, ~5 GB de disco livre.
+Pré-requisitos: Docker Desktop em execução, ~6 GB de disco livre. Python 3.11+ só é preciso para o pipeline de pesos no host (opcional — no Windows com Smart App Control ele roda via Docker).
+
+> **O guia completo de instalação do zero (obter OSM → gerar tiles → subir → pesos → geocoder) está no [README da raiz](../README.md).** O resumo abaixo assume que os passos 0–1 (dados OSM + tiles) já foram feitos.
 
 ```powershell
 # 1. subir a infra (Valhalla + PostGIS + Backend + Frontend)
 cd runtime
 Copy-Item .env.example .env       # edite a senha se for ambiente compartilhado
-docker compose up -d
+docker compose up -d --build
 
-# 2. preparar venv do pipeline ERMAC
+# 2. (opcional) injetar pesos historicos h(e) -> velocidade penalizada
+#    Windows com SAC: use o Caminho A (Docker) do 05-pipeline-trafego.md
+#    Linux/macOS ou Windows sem SAC:
 cd ..
 python -m venv scripts\.venv
-.\scripts\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt
-
-# 3. gerar e injetar pesos historicos (h(e) -> velocidade penalizada)
+.\scripts\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt pyogrio
 .\scripts\.venv\Scripts\python.exe scripts\refresh_traffic.py
 
-# 4. (opcional) geocoder Nominatim + coletar alagamentos do CGE
+# 3. (opcional) geocoder Nominatim + coletar alagamentos do CGE
+cd runtime
 docker compose --profile geocoding up -d nominatim
 docker compose --profile scraper run --rm scraper run --once
 ```

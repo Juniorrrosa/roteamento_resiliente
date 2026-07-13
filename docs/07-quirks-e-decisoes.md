@@ -145,6 +145,50 @@ Basta **não montar** o volume `nominatim_flatnode`. Sem o diretório, `NOMINATI
 
 O flatnode só compensa em imports grandes (planeta/continente), onde o overhead de I/O do Postgres para bilhões de nós seria proibitivo. Para recortes urbanos, **não use flatnode**.
 
+## Quirk #8 — Windows Smart App Control bloqueia o GDAL do `pyogrio`
+
+### O sintoma
+
+Em máquina Windows 11, `python scripts/refresh_traffic.py` (ou `build_traffic_csvs.py`) quebra ao ler o shapefile:
+
+```
+ImportError: The 'read_file' function requires the 'pyogrio' or 'fiona' package...
+Importing pyogrio resulted in: GDAL DLL could not be found.
+...
+ImportError: DLL load failed while importing _io:
+An Application Control policy has blocked this file.
+```
+
+`pyogrio` **está instalado**, mas a DLL nativa do GDAL que vem no wheel é bloqueada no carregamento.
+
+### A causa
+
+O **Smart App Control (SAC)** — recurso de segurança do Windows 11, não uma política corporativa — bloqueia executáveis/DLLs sem assinatura digital confiável e sem reputação conhecida. As DLLs do GDAL empacotadas no `pyogrio` (e no `fiona`) caem nesse caso. Diagnóstico:
+
+```powershell
+(Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy" -Name VerifiedAndReputablePolicyState).VerifiedAndReputablePolicyState
+# 0 = desligado | 1 = ligado (enforcement) | 2 = modo avaliacao
+```
+
+Trocar `pyogrio` por `fiona` **não resolve** — ambos usam DLL nativa não-assinada.
+
+### A correção
+
+Rodar o passo de leitura do shapefile **dentro de um contêiner Linux**, onde o SAC do Windows não tem efeito. É o **Caminho A** do [05 — Pipeline](05-pipeline-trafego.md):
+
+```powershell
+docker run --rm --network roteamento-resiliente_roteamento -v "${PWD}:/work" -w /work python:3.12-slim `
+  sh -c "pip install -q geopandas pyogrio requests && python scripts/build_traffic_csvs.py --clean --q 10.0 --valhalla-url http://valhalla:8002"
+docker exec valhalla valhalla_add_predicted_traffic -c /data/valhalla.json /data/traffic_csvs
+docker restart valhalla
+```
+
+Como o `refresh_traffic.py` chama o Python do host no passo `build_csvs`, ele **não** serve como wrapper único nessa máquina — os 3 comandos acima substituem o que ele faria.
+
+### Por que não desligar o SAC?
+
+É possível (Segurança do Windows → Controle de aplicativos e navegador → Smart App Control → Desativado), mas: (1) o desligamento é **irreversível** sem reinstalar/resetar o Windows; (2) o contorno via Docker já resolve sem abrir mão da proteção. Decisão: **manter o SAC ligado** e rodar o pipeline via Docker.
+
 ## Decisões registradas
 
 ### Por que Valhalla e não NetworkX?

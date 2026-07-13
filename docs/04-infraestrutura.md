@@ -73,10 +73,11 @@ Durante o import inicial do Nominatim, o status fica `unhealthy` mas o container
 
 ```
 data/
-├── sao-paulo.osm.pbf        (137 MB — OSM bruto, recorte RMSP)
+├── sudeste-latest.osm.pbf   (~850 MB — extrato bruto do Geofabrik; pode apagar após o recorte)
+├── sao-paulo.osm.pbf        (~145 MB — OSM recortado, RMSP)
 ├── valhalla.json            (config gerado pelo build)
-├── tiles/                   (128 MB — tiles ativos do Valhalla)
-├── tiles_backup/            (128 MB — copia pré-injeção)
+├── tiles/                   (~133 MB — tiles ativos do Valhalla)
+├── tiles_backup/            (~133 MB — copia pré-injeção)
 ├── valhalla/                (symlink/alias de tiles)
 ├── traffic_csvs/            (~50 KB — CSVs ERMAC, regenerados sob demanda)
 └── traffic_report/          (summary.json + affected_edges.csv — auditoria)
@@ -124,7 +125,7 @@ docker compose up -d
 
 O build da RMSP leva ~3-4 minutos. Sobrescreve `data/tiles/` e `data/valhalla.json`.
 
-> **Atenção:** após um rebuild, os pesos ERMAC injetados são **perdidos**. Roda `python scripts/refresh_traffic.py --force-backup` em seguida para reinjetar (o `--force-backup` garante que o `tiles_backup/` reflita o `.pbf` novo).
+> **Atenção:** após um rebuild, os pesos ERMAC injetados são **perdidos**. Reinjete em seguida — via `python scripts/refresh_traffic.py --force-backup` (host), ou pelo **Caminho A (Docker)** no Windows com Smart App Control. Ver [05 — Pipeline](05-pipeline-trafego.md) e [07 — Quirk #8](07-quirks-e-decisoes.md).
 
 ## Rede
 

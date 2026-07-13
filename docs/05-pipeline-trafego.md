@@ -4,16 +4,38 @@ Este é o pipeline que transforma o shapefile histórico de alagamentos em pesos
 
 ## TL;DR
 
+> ⚠️ **Windows com Smart App Control (SAC) / WDAC:** a política do Windows bloqueia as DLLs nativas do GDAL usadas pelo `geopandas`/`pyogrio`, então rodar o pipeline no **Python do host falha** com `ImportError: ... An Application Control policy has blocked this file`. Nesse caso use o **Caminho A (Docker)** abaixo. Detalhes em [07 — Quirk #8](07-quirks-e-decisoes.md).
+
+### Caminho A — via Docker (recomendado no Windows)
+
+Roda a leitura do shapefile num contêiner Linux (onde a política do Windows não se aplica), depois injeta e reinicia:
+
+```powershell
+# 1. gera os CSVs de pesos dentro de um conteiner, na rede do Valhalla
+docker run --rm --network roteamento-resiliente_roteamento -v "${PWD}:/work" -w /work python:3.12-slim `
+  sh -c "pip install -q geopandas pyogrio requests && python scripts/build_traffic_csvs.py --clean --q 10.0 --valhalla-url http://valhalla:8002"
+
+# 2. injeta nos tiles e reinicia
+docker exec valhalla valhalla_add_predicted_traffic -c /data/valhalla.json /data/traffic_csvs
+docker restart valhalla
+```
+
+Para trocar `Q`, ajuste o `--q` no passo 1. Para re-gerar após um rebuild do `.pbf`, faça um backup manual dos tiles limpos antes (ver [Restaurar tiles](#restaurar-tiles-limpos-antes-da-injeção)) — o `refresh_traffic.py` faz isso sozinho, mas ele não roda no host com SAC.
+
+### Caminho B — via Python no host (Linux/macOS, ou Windows sem SAC)
+
 ```powershell
 # preparacao (uma vez)
 python -m venv scripts\.venv
-.\scripts\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt
+.\scripts\.venv\Scripts\python.exe -m pip install -r scripts\requirements.txt pyogrio
 
 # rodar (sempre que o shapefile mudar OU se quiser reinjetar)
 .\scripts\.venv\Scripts\python.exe scripts\refresh_traffic.py
 ```
 
-Saída esperada (~15 segundos):
+> `scripts/requirements.txt` traz `geopandas`, mas o backend de leitura (`pyogrio` ou `fiona`) precisa ser instalado à parte — daí o `pyogrio` no `pip install` acima.
+
+Saída esperada do `refresh_traffic.py` (~15 segundos):
 
 ```
 INFO | Pontos INTRANSITAVEL: 922 / 2154 total
@@ -55,7 +77,9 @@ smoke test: rota seco vs chuva no mesmo trecho
 
 ## Quando re-rodar
 
-| Trigger | Comando |
+Os comandos abaixo assumem o **Caminho B** (host). No Windows com SAC, use o **Caminho A** (Docker) e ajuste os flags equivalentes no `build_traffic_csvs.py`.
+
+| Trigger | Comando (Caminho B) |
 |---|---|
 | Shapefile histórico atualizado (nova versão da equipe) | `python scripts/refresh_traffic.py` |
 | Quer ajustar `Q` (sensibilidade) | `python scripts/refresh_traffic.py --q 5` |
