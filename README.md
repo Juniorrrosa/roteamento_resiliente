@@ -65,7 +65,9 @@ docker compose up -d --build
 cd ..
 ```
 
-Isso sobe **Valhalla + PostGIS + Backend (FastAPI) + Frontend (React/nginx)**. Os containers ficam `healthy` em ~30s.
+Isso sobe a stack completa: **Valhalla + PostGIS + Backend (FastAPI) + Frontend (React/nginx) + Nominatim (geocoder) + scraper-worker (coleta em tempo real)**.
+
+> ⏳ **Primeira subida:** o **Nominatim** faz um import inicial de ~3 min (o container fica `health: starting` nesse período) — normal, não reinicie. O `scraper-worker` fica `healthy` após o primeiro ciclo. Se quiser subir só o essencial e rápido: `docker compose up -d valhalla postgis backend frontend`.
 
 ✅ **Pronto — interface web em [http://localhost:3000](http://localhost:3000).**
 
@@ -74,8 +76,9 @@ Isso sobe **Valhalla + PostGIS + Backend (FastAPI) + Frontend (React/nginx)**. O
 | 🌐 Interface web | http://localhost:3000 | mapa + busca + rotas |
 | API backend | http://localhost:8000 (`/health`, `/rota`, `/alagamentos`, `/geocode`) | orquestra o modelo ERMAC |
 | Motor de rotas (Valhalla) | http://localhost:8002 (`/route`, `/status`) | grafo da RMSP |
+| Geocoder (Nominatim) | http://localhost:8080 | busca por endereço |
 
-> Enquanto os passos 3 e 4 não forem feitos, o `/health` retorna `degraded` (Nominatim ausente) e as rotas ainda **não** têm penalização por histórico — mas o roteamento por clique no mapa já funciona.
+> O `/health` fica `degraded` até o Nominatim terminar o import; depois vai a `ok`. As rotas por clique no mapa já funcionam de imediato; a **penalização por histórico** só aparece após o passo 3.
 
 ### 3. (Opcional) Pesos históricos de alagamento
 
@@ -105,19 +108,23 @@ python -m venv scripts\.venv
 
 Validação esperada: **922 pontos** INTRANSITÁVEL → **880 arestas** penalizadas; smoke test mostra o mesmo trecho em **~26 s (seco)** vs **~53 s (chuva)** (+102%). Ver [docs/05 — Pipeline](docs/05-pipeline-trafego.md).
 
-### 4. (Opcional) Geocoder Nominatim + scraper CGE
+### 4. Coleta de alagamentos em tempo real
+
+O **`scraper-worker` já sobe no passo 2** e coleta o CGE-SP automaticamente, em cadência adaptativa (2–15 min conforme a situação). Nada a fazer aqui — é só acompanhar:
 
 ```powershell
 cd runtime
+docker compose logs -f scraper-worker    # ver os ciclos de coleta
+docker compose ps scraper-worker         # healthy = coletando normalmente
+```
 
-# geocoder por endereco (import inicial ~3 min, ~4 GB de disco)
-docker compose --profile geocoding up -d nominatim
+Para uma **coleta pontual** sob demanda (fora do worker), o modo batch continua disponível:
 
-# coletar alagamentos do CGE-SP (modo batch, roda e sai)
+```powershell
 docker compose --profile scraper run --rm scraper run --once
 ```
 
-Com o Nominatim importado, a busca por endereço funciona e o `/health` passa a `ok`.
+> Detalhes da cadência, backoff e variáveis de ambiente em [`scraper/README.md`](scraper/README.md) e [docs/09 — Roadmap, Etapa 6](docs/09-roadmap.md).
 
 ---
 

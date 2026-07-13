@@ -90,8 +90,8 @@ services:
     networks:
       - roteamento
 
-  # Scraper do CGE-SP. Roda em modo batch (uma vez por execucao). Atras de profile
-  # porque nao faz sentido manter rodando — dispare manualmente:
+  # Scraper do CGE-SP em modo BATCH (uma passada e sai). Atras de profile — dispare
+  # manualmente quando quiser uma coleta pontual:
   #   docker compose --profile scraper run --rm scraper run --once [--dry-run] [--date dd/mm/YYYY]
   scraper:
     build: ../scraper
@@ -108,13 +108,41 @@ services:
     networks:
       - roteamento
 
-  # Nominatim atrás de um profile. Recorte da regiao metropolitana de SP:
-  # import em minutos, ~15 GB de disco. Suba sob demanda com:
-  #   docker compose --profile geocoding up -d nominatim
+  # Worker real-time: roda o scraper em LOOP com cadencia adaptativa (Etapa 6).
+  # Sobe junto com a stack e se mantem rodando (restart: unless-stopped).
+  # Cadencia/limites configuraveis por env (ver scraper/app/config.py).
+  scraper-worker:
+    build: ../scraper
+    container_name: scraper-worker
+    command: ["run", "--loop"]
+    environment:
+      BACKEND_URL: http://backend:8000
+      CGE_URL: https://www.cgesp.org/v3/alagamentos.jsp
+      LOG_LEVEL: INFO
+      HEADLESS: "true"
+    depends_on:
+      backend:
+        condition: service_healthy
+      nominatim:
+        condition: service_healthy
+    healthcheck:
+      # heartbeat escrito a cada ciclo bem-sucedido; unhealthy se parar de atualizar
+      # por >25 min (cobre o intervalo maximo de 15 min + folga)
+      test: ["CMD-SHELL", "python -c \"import time,sys; t=float(open('/tmp/scraper_heartbeat').read()); sys.exit(0 if time.time()-t < 1500 else 1)\""]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 240s
+    restart: unless-stopped
+    networks:
+      - roteamento
+
+  # Nominatim sobe junto com a stack (o scraper-worker depende dele pra geocodar).
+  # Recorte da RMSP: import inicial ~3 min, ~4 GB de disco. Para NAO subir o
+  # geocoder (stack minima), use: docker compose up -d valhalla postgis backend frontend
   nominatim:
     image: mediagis/nominatim:4.4
     container_name: nominatim
-    profiles: ["geocoding"]
     ports:
       - "8080:8080"
     environment:

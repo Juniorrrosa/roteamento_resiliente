@@ -1,6 +1,6 @@
 # 04 — Infraestrutura
 
-Tudo é orquestrado por `runtime/docker-compose.yml`. Seis serviços, dois atrás de profile.
+Tudo é orquestrado por `runtime/docker-compose.yml`. Sete serviços; só o `scraper` batch fica atrás de profile.
 
 ## Serviços
 
@@ -10,8 +10,11 @@ Tudo é orquestrado por `runtime/docker-compose.yml`. Seis serviços, dois atrá
 | `postgis` | `postgis/postgis:16-3.4` | 5432 | ✅ | `postgis_data` + `./initdb` |
 | `backend` | build `../backend` (FastAPI) | 8000 | ✅ | `../data:/data:ro` (hotspots) |
 | `frontend` | build `../frontend` (nginx+React) | 3000 | ✅ | — |
-| `nominatim` | `mediagis/nominatim:4.4` | 8080 | ❌ (profile `geocoding`) | só o `.pbf` montado + `nominatim_data` (sem flatnode) |
-| `scraper` | build `../scraper` (CGE-SP) | — | ❌ (profile `scraper`, batch) | — |
+| `nominatim` | `mediagis/nominatim:4.4` | 8080 | ✅ | só o `.pbf` montado + `nominatim_data` (sem flatnode) |
+| `scraper-worker` | build `../scraper` (CGE-SP, loop) | — | ✅ | — |
+| `scraper` | build `../scraper` (CGE-SP, batch) | — | ❌ (profile `scraper`) | — |
+
+> **Stack mínima (sem geocoder/worker):** `docker compose up -d valhalla postgis backend frontend`. O `up` padrão inclui o Nominatim (import inicial ~3 min) e o `scraper-worker` real-time — ver [09 — Roadmap, Etapa 6](09-roadmap.md).
 
 ## Variáveis de ambiente
 
@@ -31,14 +34,17 @@ O `docker-compose.yml` usa `${POSTGRES_PASSWORD:?defina ... em runtime/.env}`, q
 ```powershell
 cd runtime
 
-# subir base (valhalla + postgis)
+# subir a stack completa (valhalla + postgis + backend + frontend + nominatim + scraper-worker)
 docker compose up -d
+
+# stack minima, sem geocoder nem worker real-time
+docker compose up -d valhalla postgis backend frontend
 
 # parar e remover containers (mantém volumes)
 docker compose down
 
-# subir tambem o nominatim (so a 1a vez ou apos terminar import)
-docker compose --profile geocoding up -d nominatim
+# coleta pontual do CGE (batch, sob demanda) — o worker real-time ja sobe no up padrao
+docker compose --profile scraper run --rm scraper run --once
 
 # logs em tempo real
 docker compose logs -f valhalla
@@ -66,6 +72,7 @@ Cada serviço expõe um healthcheck. `docker compose up -d` retorna assim que os
 | backend | `urlopen http://localhost:8000/health` | ~20s (depende de valhalla+postgis healthy) |
 | frontend | `wget http://localhost:80/` | ~10s |
 | nominatim | `curl http://localhost:8080/status` | **~3 min** durante o import inicial (RMSP); depois ~60s |
+| scraper-worker | heartbeat `/tmp/scraper_heartbeat` recente (< 25 min) | após o 1º ciclo (~30-60s de Selenium); depende de backend+nominatim healthy |
 
 Durante o import inicial do Nominatim, o status fica `unhealthy` mas o container está rodando normalmente. **Não reiniciar** — vai recomeçar do zero. Acompanhe via `docker logs -f nominatim`.
 

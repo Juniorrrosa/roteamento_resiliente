@@ -2,7 +2,7 @@
 
 O que já está pronto, o que falta, e em que ordem fazer.
 
-## Estado atual (2026-06-10)
+## Estado atual (2026-07-13)
 
 ```
 [✓] Etapa 0  — Validação técnica do Valhalla (binários, tiles, traffic.tar)
@@ -11,11 +11,15 @@ O que já está pronto, o que falta, e em que ordem fazer.
 [✓] Etapa 3  — Backend FastAPI (/health, /geocode, /alagamentos, /rota)
 [✓] Etapa 4  — Scraper CGE-SP + integração Nominatim + push snapshot
 [✓] Etapa 5  — Frontend (React + Vite + Leaflet) — MVP core (rota + alagamentos)
+[✓] Etapa 6  — Polling automático do scraper (worker real-time, cadência adaptativa)
 [✓] Documentação operacional (esta pasta)
-[ ] Etapa 6  — Modo polling automático do scraper (real-time)
 [ ] Etapa 7  — Monitoramento (Prometheus/Grafana ou equivalente)
 [ ] Etapa 8  — Deploy em ambiente compartilhado
 ```
+
+> **MVP real-time usável concluído (2026-07-13):** com a Etapa 6, o `docker compose up -d`
+> sobe o `scraper-worker` (loop autônomo) + Nominatim, então o sistema coleta alagamentos
+> do CGE-SP sozinho. Falta só monitoramento (7) e deploy público (8).
 
 > Recorte do mapa migrado de Sudeste → **região metropolitana de SP** em 2026-06-08 (ver [04 — Infraestrutura](04-infraestrutura.md) e Quirk #7).
 
@@ -152,17 +156,28 @@ Stack implementada (`frontend/`):
 - Reverse-geocoding dos pontos definidos por clique/GPS (hoje usam coordenadas direto)
 - TanStack Query / cache de estado (hoje é `fetch` + `useState`, suficiente para o MVP)
 
-## Etapa 6 — Polling automático do scraper
+## Etapa 6 — Polling automático do scraper ✅
 
-Tornar o scraper autônomo, com cadência adaptativa:
+Scraper autônomo, com cadência adaptativa. **Implementado** em `scraper/app/loop.py`.
 
-- **5 min** em condições normais
-- **2 min** se há ≥ 1 alagamento ativo
-- **15 min** após 1h sem alagamentos
-- Retry com exponential backoff em caso de erro de scraping
-- Alerta se falhar por >15 min (período crítico)
+- **5 min** em condições normais (`poll_interval_normal`)
+- **2 min** se há ≥ 1 alagamento ativo (`poll_interval_active`)
+- **15 min** após 1h sem alagamentos (`poll_interval_quiet` / `quiet_after_seconds`)
+- Retry com **exponential backoff** (30s → 5 min) em erro de scraping
+- Log **CRITICAL** se falhar por > 15 min (`alert_after_seconds`)
 
-Implementação como container `scraper-worker` no compose, com healthcheck.
+Container `scraper-worker` no `runtime/docker-compose.yml`: sobe junto com a stack
+(`restart: unless-stopped`), roda `cge-scraper run --loop`. **Healthcheck** por heartbeat
+— o loop grava `/tmp/scraper_heartbeat` a cada ciclo bem-sucedido; o container fica
+`unhealthy` se parar de atualizar por > ~25 min. Toda a cadência é configurável por env
+(ver [`scraper/README.md`](../scraper/README.md) e `scraper/app/config.py`).
+
+A lógica de decisão (intervalo e backoff) são funções puras testadas em
+`scraper/tests/test_loop.py`, sem depender de rede/Selenium.
+
+> **Deixado para depois:** persistência de estado do worker entre reinícios (hoje ele
+> reassume em cadência normal ao subir) e um endpoint `/metrics` do próprio worker
+> (coberto de forma geral pela Etapa 7).
 
 ## Etapa 7 — Monitoramento
 

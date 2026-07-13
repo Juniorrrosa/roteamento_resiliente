@@ -31,6 +31,10 @@ def _parse_date_arg(s: str) -> date:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
+    if args.loop:
+        from app.loop import run_loop
+        asyncio.run(run_loop())
+        return 0
     result = asyncio.run(
         run_pipeline(target_date=args.date, dry_run=args.dry_run, save_html_to=args.save_html)
     )
@@ -51,8 +55,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p_run = sub.add_parser("run", help="Coleta, geocoda e envia ao backend")
+    p_run.add_argument("--loop", action="store_true",
+                       help="roda em loop continuo com cadencia adaptativa (worker real-time)")
     p_run.add_argument("--once", action="store_true",
-                       help="(reservado para futura compatibilidade com modo loop; hoje 'run' ja e once)")
+                       help="passada unica (padrao quando --loop nao e informado)")
     p_run.add_argument("--date", type=_parse_date_arg, default=None,
                        help="data alvo (dd/mm/YYYY). default: hoje")
     p_run.add_argument("--dry-run", action="store_true",
