@@ -24,7 +24,7 @@ export default function RoutesPanel({ rotas, visiveis, onToggle }) {
               >
                 <span className="scn-line" style={{ background: s.color, opacity: on ? 1 : 0.3 }} />
                 <span className="scn-body">
-                  <span className="scn-label">{s.label}</span>
+                  <span className="scn-label">{s.desc || s.label}</span>
                   <span className={`scn-metrics ${res?.bloqueada ? "scn-blocked" : ""}`}>
                     {principal
                       ? `${fmtKm(principal.length_km)} · ${fmtMin(principal.time_seconds)}`

@@ -325,6 +325,44 @@ body {
   color: var(--muted);
 }
 
+/* ---------- Sobre Nós ---------- */
+.about { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.about h2 { font-size: 14px; margin: 0 0 10px; }
+.about-sub {
+  font-size: 12.5px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.4px;
+  margin: 18px 0 10px;
+}
+.about-tech {
+  font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0;
+}
+.about-tech strong { color: var(--text); font-weight: 600; }
+
+.collab-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.collab-card {
+  display: flex; gap: 11px;
+  padding: 10px 11px;
+  border: 1px solid var(--border); border-radius: 12px; background: #fff;
+}
+.collab-photo {
+  width: 46px; height: 46px; flex-shrink: 0;
+  border-radius: 50%; object-fit: cover;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.collab-body { display: flex; flex-direction: column; min-width: 0; }
+.collab-name { font-size: 13.5px; font-weight: 600; }
+.collab-bio { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: 3px; }
+
+.inst-logos {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 14px 18px; padding: 2px;
+}
+.inst-logo {
+  height: 30px; max-width: 96px; object-fit: contain;
+  opacity: 0.85; transition: opacity 0.15s;
+}
+.inst-logo:hover { opacity: 1; }
+
 /* Tooltips e popups mais limpos */
 .leaflet-tooltip {
   border: none;

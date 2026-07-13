@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import MapView from "./components/MapView.jsx";
 import RouteForm from "./components/RouteForm.jsx";
 import RoutesPanel from "./components/RoutesPanel.jsx";
+import SobreNos from "./components/SobreNos.jsx";
 import { getAlagamentos, getHotspots, postRota } from "./api.js";
 import { toApiLocation } from "./lib/format.js";
 import { MARKER } from "./lib/colors.js";
@@ -157,12 +158,14 @@ export default function App() {
           </div>
 
           <div className="legend">
-            <div><span className="lg lg-dot" style={{ background: MARKER.alagamento }} /> alagamento ativo (CGE)</div>
-            <div><span className="lg lg-dot" style={{ background: "#f59f00" }} /> hotspot histórico (severidade)</div>
+            <div><span className="lg lg-dot" style={{ background: MARKER.alagamento }} /> alagamentos ativos (CGE)</div>
+            <div><span className="lg lg-dot" style={{ background: "#f59f00" }} /> Histórico de alagamentos</div>
             <div><span className="lg lg-dot" style={{ background: MARKER.origem }} /> origem · <span className="lg lg-dot" style={{ background: MARKER.destino }} /> destino</div>
           </div>
 
           <p className="hint">{alagamentos.length} alagamento(s) ativo(s) agora (CGE).</p>
+
+          <SobreNos />
         </aside>
 
         <main className="map-wrap">
