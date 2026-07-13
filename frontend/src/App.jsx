@@ -81,7 +81,8 @@ export default function App() {
     setLoading(true);
     setErro(null);
     try {
-      const resultados = await Promise.all(
+      // allSettled: uma rota que falha (ex.: cenário sem caminho) não derruba as demais.
+      const settled = await Promise.allSettled(
         SCENARIOS.map((s) =>
           postRota({
             origem: o,
@@ -93,9 +94,18 @@ export default function App() {
         )
       );
       const novo = { ...SEM_ROTAS };
+      let okCount = 0;
+      let ultimoErro = null;
       SCENARIOS.forEach((s, i) => {
-        novo[s.key] = resultados[i];
+        const r = settled[i];
+        if (r.status === "fulfilled") {
+          novo[s.key] = r.value;
+          okCount += 1;
+        } else {
+          ultimoErro = r.reason;
+        }
       });
+      if (okCount === 0) throw ultimoErro || new Error("Falha ao calcular rotas.");
       setRotas(novo);
       setVisiveis(TODAS_VISIVEIS);
     } catch (e) {

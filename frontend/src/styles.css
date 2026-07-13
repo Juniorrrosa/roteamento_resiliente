@@ -179,8 +179,9 @@ body {
 .result h2 { font-size: 14px; margin: 0 0 4px; }
 
 .scenarios { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.scn-item { display: flex; align-items: stretch; gap: 6px; }
 .scn {
-  width: 100%; display: flex; align-items: center; gap: 11px;
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px;
   padding: 10px 11px; border: 1px solid var(--border); border-radius: 12px;
   background: #fff; cursor: pointer; text-align: left;
   transition: border-color 0.15s, background 0.15s, opacity 0.15s;
@@ -192,7 +193,37 @@ body {
 .scn-label { font-size: 13.5px; font-weight: 600; }
 .scn-metrics { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 .scn-evit { color: #b42318; font-weight: 600; }
+.scn-blocked { color: #b42318; font-weight: 600; }
 .scn-eye { font-size: 14px; flex-shrink: 0; }
+
+/* ---------- Ações da rota (Maps / exportar / compartilhar) ---------- */
+.scn-actions { position: relative; flex-shrink: 0; display: flex; gap: 6px; }
+.scn-act-btn {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 38px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 12px; background: #fff;
+  cursor: pointer; font-size: 16px; color: var(--muted); text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.scn-act-btn:hover { border-color: var(--accent); color: var(--accent); background: #fafbfc; }
+.scn-export-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 1200;
+  display: flex; flex-direction: column; min-width: 188px; padding: 6px;
+  background: #fff; border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.scn-export-menu button, .scn-export-menu a {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 10px; border: none; border-radius: 8px; background: none;
+  font-size: 13.5px; color: var(--text); text-align: left; text-decoration: none;
+  cursor: pointer;
+}
+.scn-export-menu button:hover, .scn-export-menu a:hover { background: #f1f4f8; }
+.scn-export-aviso {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 1200;
+  max-width: 220px; padding: 8px 10px; border-radius: 8px;
+  background: #11335b; color: #fff; font-size: 12px; box-shadow: var(--shadow);
+}
 
 /* ---------- Camadas + legenda ---------- */
 .layers { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }

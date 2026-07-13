@@ -24,6 +24,14 @@ router = APIRouter(prefix="/rota", tags=["rota"])
 LOG = logging.getLogger(__name__)
 
 
+def _is_no_path(response: httpx.Response) -> bool:
+    """True se o Valhalla respondeu 442 (No path could be found)."""
+    try:
+        return response.json().get("error_code") == 442
+    except Exception:
+        return False
+
+
 async def _resolve_location(loc: Location, session: AsyncSession) -> tuple[float, float]:
     if loc.lat is not None and loc.lng is not None:
         return loc.lat, loc.lng
@@ -82,6 +90,18 @@ async def calcular_rota(
     try:
         result = await valhalla_client().route(body)
     except httpx.HTTPStatusError as exc:
+        # 442 = "No path could be found": resposta legitima quando os alagamentos
+        # bloqueiam todos os caminhos (ou prendem origem/destino). Nao e erro de
+        # servidor — devolvemos rota vazia marcada como bloqueada.
+        if _is_no_path(exc.response):
+            return RotaResponse(
+                modo="chuva" if payload.chuva else "seco",
+                alagamentos_evitados=len(excludes),
+                rotas=[],
+                origem_usada=origem,
+                destino_usado=destino,
+                bloqueada=True,
+            )
         raise HTTPException(status_code=502, detail=f"Valhalla: {exc.response.text[:200]}") from exc
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail=f"Valhalla offline: {exc}") from exc

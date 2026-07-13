@@ -1,5 +1,6 @@
 import { SCENARIOS } from "../lib/scenarios.js";
 import { fmtKm, fmtMin } from "../lib/format.js";
+import RouteExport from "./RouteExport.jsx";
 
 // Legenda + controle de visibilidade das 4 rotas. Clicar na linha liga/desliga.
 export default function RoutesPanel({ rotas, visiveis, onToggle }) {
@@ -14,7 +15,7 @@ export default function RoutesPanel({ rotas, visiveis, onToggle }) {
           const principal = res?.rotas?.[0];
           const on = visiveis[s.key];
           return (
-            <li key={s.key}>
+            <li key={s.key} className="scn-item">
               <button
                 type="button"
                 className={`scn ${on ? "" : "off"}`}
@@ -24,14 +25,17 @@ export default function RoutesPanel({ rotas, visiveis, onToggle }) {
                 <span className="scn-line" style={{ background: s.color, opacity: on ? 1 : 0.3 }} />
                 <span className="scn-body">
                   <span className="scn-label">{s.label}</span>
-                  <span className="scn-metrics">
+                  <span className={`scn-metrics ${res?.bloqueada ? "scn-blocked" : ""}`}>
                     {principal
                       ? `${fmtKm(principal.length_km)} · ${fmtMin(principal.time_seconds)}`
-                      : "—"}
+                      : res?.bloqueada
+                        ? "🚧 sem rota livre de alagamento"
+                        : "—"}
                   </span>
                 </span>
                 <span className="scn-eye">{on ? "👁️" : "🚫"}</span>
               </button>
+              {principal && <RouteExport scenario={s} res={res} principal={principal} />}
             </li>
           );
         })}

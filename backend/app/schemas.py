@@ -106,6 +106,10 @@ class RotaResponse(BaseModel):
     rotas: list[RotaTrecho]
     origem_usada: tuple[float, float]
     destino_usado: tuple[float, float]
+    bloqueada: bool = Field(
+        default=False,
+        description="True se nao ha rota possivel evitando os alagamentos ativos (Valhalla 442)",
+    )
 
 
 # ============================================================================

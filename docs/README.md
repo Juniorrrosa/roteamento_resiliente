@@ -25,6 +25,10 @@ Esta pasta contém a documentação operacional e técnica do projeto. Comece pe
 8. [08 — Deploy](08-deploy.md) — secrets, backups, considerações de produção
 9. [09 — Roadmap](09-roadmap.md) — o que já está pronto (Etapas 0–5: infra, pipeline, backend, scraper, frontend) e o que falta (polling, monitoramento, deploy)
 
+## Para apresentar / demonstrar
+
+- [demo — roteiro de apresentação](demo.md) — passo a passo no frontend para mostrar as duas componentes do modelo (restrição dura com alagamento RT + restrição suave com peso histórico), com números medidos e evidências de validação
+
 > Cada componente tem seu próprio README: [`backend/`](../backend/README.md), [`frontend/`](../frontend/README.md), [`scraper/`](../scraper/README.md).
 
 ---
