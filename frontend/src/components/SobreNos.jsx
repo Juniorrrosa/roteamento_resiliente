@@ -19,6 +19,16 @@ const COLABORADORES = [
     bio: "Doutoranda no Programa de Pós-Graduação em Ciência da Computação da UNIFESP. Mestre em Pesquisa Operacional pelo ITA e pela UNIFESP e especialista em Business Intelligence pela Universidade Anhembi Morumbi.",
   },
   {
+    nome: "Junior Rosa",
+    foto: junior,
+    bio: "Engenheiro da computação formado pela Universidade do Vale do Paraíba (UNIVAP) e candidato ao mestrado em Computação Aplicada pelo INPE.",
+  },
+  {
+    nome: "Leonardo Santos",
+    foto: leonardo,
+    bio: "Pesquisador Titular em Modelagem Computacional no CEMADEN-MCTI e professor em programas de pós-graduação do INPE e da UNIFESP. Doutor pelo INPE, com formação em Física pela UFBA, atuou também como professor visitante na Universidade Humboldt (Berlim).",
+  },
+  {
     nome: "Gabriel Silva Delgado",
     foto: gabriel,
     bio: "Professor no IFES – Campus de Alegre. Graduado em Lic. Matemática pelo IFSP, Mestrado Profissional PROFMAT pela Unifesp e doutorando no PPG-PO em uma parceria entre Unifesp e ITA. Atua com otimização não linear atrelado a regiões de confiança.",
@@ -37,16 +47,6 @@ const COLABORADORES = [
     nome: "Luiz Leduino Salles Neto",
     foto: leduino,
     bio: "Professor Titular do Instituto de Ciência e Tecnologia da Universidade Federal de São Paulo (Unifesp) e atual Presidente do Escritório de Integridade Acadêmica da universidade. Foi pesquisador visitante na University of Colorado Denver (Estados Unidos) e na Universidad de Sevilla (Espanha). Atua nas áreas de Matemática Aplicada e de Pesquisa Operacional, com ênfase em aplicações à logística e a sistemas inteligentes de apoio à decisão.",
-  },
-  {
-    nome: "Leonardo Santos",
-    foto: leonardo,
-    bio: "Pesquisador Titular em Modelagem Computacional no CEMADEN-MCTI e professor em programas de pós-graduação do INPE e da UNIFESP. Doutor pelo INPE, com formação em Física pela UFBA, atuou também como professor visitante na Universidade Humboldt (Berlim).",
-  },
-  {
-    nome: "Junior Rosa",
-    foto: junior,
-    bio: "Engenheiro da computação formado pela Universidade do Vale do Paraíba (UNIVAP) e aluno do mestrado profissional em Computação Aplicada pelo INPE.",
   },
 ];
 
