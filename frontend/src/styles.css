@@ -118,7 +118,7 @@ body {
 .field-label {
   display: flex; align-items: center; gap: 7px;
   font-size: 12.5px; font-weight: 600; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.4px;
+  text-transform: none; letter-spacing: normal;
 }
 .field-dot { width: 9px; height: 9px; border-radius: 50%; }
 .field input {
@@ -357,11 +357,12 @@ body {
   display: flex; flex-wrap: wrap; align-items: center;
   gap: 14px 18px; padding: 2px;
 }
+.inst-logo-link { display: inline-flex; align-items: center; }
 .inst-logo {
-  height: 30px; max-width: 96px; object-fit: contain;
-  opacity: 0.85; transition: opacity 0.15s;
+  height: 34px; width: auto; object-fit: contain;
+  opacity: 0.85; transition: opacity 0.15s, transform 0.1s;
 }
-.inst-logo:hover { opacity: 1; }
+.inst-logo-link:hover .inst-logo { opacity: 1; transform: scale(1.05); }
 
 /* Tooltips e popups mais limpos */
 .leaflet-tooltip {

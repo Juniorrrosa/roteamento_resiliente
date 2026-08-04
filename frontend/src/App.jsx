@@ -160,7 +160,7 @@ export default function App() {
           <div className="legend">
             <div><span className="lg lg-dot" style={{ background: MARKER.alagamento }} /> alagamentos ativos (CGE)</div>
             <div><span className="lg lg-dot" style={{ background: "#f59f00" }} /> Histórico de alagamentos</div>
-            <div><span className="lg lg-dot" style={{ background: MARKER.origem }} /> origem · <span className="lg lg-dot" style={{ background: MARKER.destino }} /> destino</div>
+            <div><span className="lg lg-dot" style={{ background: MARKER.origem }} /> Origem · <span className="lg lg-dot" style={{ background: MARKER.destino }} /> Destino</div>
           </div>
 
           <p className="hint">{alagamentos.length} alagamento(s) ativo(s) agora (CGE).</p>
