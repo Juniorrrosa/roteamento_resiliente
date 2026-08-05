@@ -158,7 +158,7 @@ export default function App() {
           </div>
 
           <div className="legend">
-            <div><span className="lg lg-dot" style={{ background: MARKER.alagamento }} /> alagamentos ativos (CGE)</div>
+            <div><span className="lg lg-dot" style={{ background: MARKER.alagamento }} /> Alagamentos ativos (CGE)</div>
             <div><span className="lg lg-dot" style={{ background: "#f59f00" }} /> Histórico de alagamentos</div>
             <div><span className="lg lg-dot" style={{ background: MARKER.origem }} /> Origem · <span className="lg lg-dot" style={{ background: MARKER.destino }} /> Destino</div>
           </div>
