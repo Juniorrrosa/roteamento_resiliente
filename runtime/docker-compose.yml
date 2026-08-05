@@ -28,7 +28,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-roteamento}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD em runtime/.env}@postgis:5432/${POSTGRES_DB:-roteamento}
       VALHALLA_URL: http://valhalla:8002
       NOMINATIM_URL: http://nominatim:8080
-      ERMAC_Q: "10.0"
+      ERMAC_Q: "2.0"
       LOG_LEVEL: INFO
       CORS_ORIGINS: "*"
       HOTSPOTS_CSV: /data/traffic_report/affected_edges.csv

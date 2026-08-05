@@ -7,7 +7,7 @@ export const SCENARIOS = [
     key: "ideal",
     label: "Sem chuva, sem alagamento",
     short: "Ideal",
-    desc: "Rota mais rápida, sem considerar alagamentos",
+    desc: "Rota mais rápida (original)",
     chuva: false,
     evitar: false,
     color: "#2f9e44",
