@@ -25,6 +25,25 @@ def date_time_for_chuva(chuva: bool) -> dict[str, Any]:
     return {"type": 1, "value": f"{date.today().isoformat()}T{hour}"}
 
 
+# Meio-lado (em graus) do polígono que cerca cada alagamento do CGE (~44 m).
+# Usamos exclude_polygons em vez de exclude_locations porque este último só exclui
+# a aresta mais próxima do ponto exato: quando a coordenada do alagamento não cai
+# precisamente sobre a via (imprecisão de geocoding, vias com sentidos separados),
+# a rota passava "coladinho" no alagamento. O polígono torna a área intransitável.
+FLOOD_BOX_HALF_DEG = 0.0004
+
+
+def _flood_polygon(lat: float, lng: float, half: float = FLOOD_BOX_HALF_DEG) -> list[list[float]]:
+    """Anel quadrado [lon, lat] ao redor do ponto (formato que o Valhalla espera)."""
+    return [
+        [lng - half, lat - half],
+        [lng + half, lat - half],
+        [lng + half, lat + half],
+        [lng - half, lat + half],
+        [lng - half, lat - half],
+    ]
+
+
 def build_route_payload(
     origem: tuple[float, float],
     destino: tuple[float, float],
@@ -42,7 +61,8 @@ def build_route_payload(
         "alternates": alternates,
     }
     if excludes:
-        payload["exclude_locations"] = [{"lat": p.lat, "lon": p.lng} for p in excludes]
+        # b(e) = ∞: rota não pode atravessar a área alagada (restrição dura).
+        payload["exclude_polygons"] = [_flood_polygon(p.lat, p.lng) for p in excludes]
     return payload
 
 
