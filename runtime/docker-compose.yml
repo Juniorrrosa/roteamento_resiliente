@@ -54,6 +54,9 @@ services:
     build: ../frontend
     container_name: frontend
     ports:
+      # porta 80 = HTTP padrao (acessivel por http://IP sem :porta e liberada na
+      # maioria das redes). 3000 mantida por compatibilidade com links antigos.
+      - "80:80"
       - "3000:80"
     depends_on:
       backend:
