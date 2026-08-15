@@ -14,6 +14,10 @@ from pydantic import BaseModel, Field, model_validator
 
 class GeocodeRequest(BaseModel):
     endereco: str = Field(..., min_length=3, examples=["Av Paulista 1000, Sao Paulo"])
+    # Opcionais: se enviados, o backend usa busca estruturada no Nominatim
+    # (rua + cidade), bem mais precisa para enderecos informais (ex.: do CGE).
+    bairro: str | None = None
+    cidade: str | None = None
 
 
 class GeocodeResponse(BaseModel):

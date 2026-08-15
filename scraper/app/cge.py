@@ -11,6 +11,7 @@ Separamos as duas camadas para permitir testar o parser sem rodar browser.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from dataclasses import dataclass
 from datetime import date
@@ -18,6 +19,59 @@ from datetime import date
 from bs4 import BeautifulSoup, Tag
 
 LOG = logging.getLogger(__name__)
+
+
+# --- Normalizacao de enderecos do CGE ------------------------------------------
+# O CGE usa formato informal: abreviado, caixa alta, sem numero e com jargao de
+# pista/sentido. Isso derruba o geocoder. Aqui limpamos o nome da via.
+_PREFIXO_VIA = {
+    "AV": "Avenida", "AVN": "Avenida", "AVE": "Avenida",
+    "R": "Rua", "RUA": "Rua",
+    "PC": "Praça", "PCA": "Praça", "PÇA": "Praça", "PRACA": "Praça",
+    "AL": "Alameda", "TV": "Travessa", "TRAV": "Travessa",
+    "EST": "Estrada", "ESTR": "Estrada", "ROD": "Rodovia",
+    "VD": "Viaduto", "VIAD": "Viaduto", "PTE": "Ponte", "LGO": "Largo",
+    "MARG": "Marginal",
+}
+_HONORIFICO = {
+    "DR": "Doutor", "DRA": "Doutora", "PROF": "Professor", "PROFA": "Professora",
+    "PRES": "Presidente", "MAL": "Marechal", "GAL": "General", "CEL": "Coronel",
+    "ENG": "Engenheiro", "VER": "Vereador", "SEN": "Senador", "MJ": "Major",
+    "CMTE": "Comandante", "STO": "Santo", "STA": "Santa",
+}
+# jargao de pista/sentido do CGE que atrapalha o geocoder
+_JARGAO = {"CBAS", "EXPRESSA", "EXPRESSO", "PISTA", "LOCAL", "CENTRAL", "COMPLEXO"}
+# correcoes pontuais comuns no CGE (grafia/acentos)
+_CORRECAO = {"TIETE": "Tietê", "BRAZIL": "Brasil"}
+_CONECTORES = {"de", "da", "do", "das", "dos", "e"}
+
+
+def normalize_cge_local(local: str) -> str:
+    """Limpa o nome da via do CGE para melhorar o geocoding.
+
+    Ex.: "AV MORVAN DIAS DE FIGUEIREDO" -> "Avenida Morvan Dias de Figueiredo"
+         "MARGINAL TIETE CBAS EXPRESSA" -> "Marginal Tietê"
+         "AV VITAL BRAZIL"              -> "Avenida Vital Brasil"
+    """
+    raw = re.sub(r"[.,;/]", " ", local or "")
+    tokens = [t for t in raw.split() if t]
+    out: list[str] = []
+    for i, tok in enumerate(tokens):
+        up = tok.upper()
+        if up in _JARGAO:
+            continue
+        if i == 0 and up in _PREFIXO_VIA:
+            out.append(_PREFIXO_VIA[up])
+        elif up in _HONORIFICO:
+            out.append(_HONORIFICO[up])
+        elif up in _CORRECAO:
+            out.append(_CORRECAO[up])
+        else:
+            low = tok.lower()
+            out.append(low if low in _CONECTORES else low.capitalize())
+    if out and out[0].lower() in _CONECTORES:
+        out[0] = out[0].capitalize()
+    return " ".join(out).strip()
 
 
 @dataclass
@@ -30,9 +84,14 @@ class RawRecord:
     sentido: str            # direcao do alagamento (string livre)
     referencia: str         # ponto de referencia textual (string livre)
 
+    @property
+    def local_norm(self) -> str:
+        """Nome da via normalizado (usado na busca estruturada do Nominatim)."""
+        return normalize_cge_local(self.local)
+
     def endereco_para_geocode(self, cidade: str = "São Paulo, SP, Brasil") -> str:
-        """Monta um endereco textual para alimentar o Nominatim."""
-        parts = [self.local, self.bairro, cidade]
+        """Monta um endereco textual (normalizado) para exibicao/registro."""
+        parts = [self.local_norm, self.bairro, cidade]
         return ", ".join(p for p in parts if p)
 
 

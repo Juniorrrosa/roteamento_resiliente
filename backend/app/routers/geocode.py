@@ -20,7 +20,9 @@ async def geocode(
     payload: GeocodeRequest, session: AsyncSession = Depends(get_session)
 ) -> GeocodeResponse:
     try:
-        lat, lng, display, source = await geocode_cached(payload.endereco, session)
+        lat, lng, display, source = await geocode_cached(
+            payload.endereco, session, bairro=payload.bairro, cidade=payload.cidade
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

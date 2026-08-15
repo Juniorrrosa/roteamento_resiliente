@@ -71,9 +71,10 @@ async def run_pipeline(
     falhas = 0
     try:
         for rec in raw_records:
-            endereco = rec.endereco_para_geocode()
+            endereco = rec.endereco_para_geocode()  # normalizado, para registro/exibicao
             try:
-                lat, lng = await geocoder.geocode(endereco)
+                # busca estruturada: nome da via (normalizado) + bairro
+                lat, lng = await geocoder.geocode(rec.local_norm, bairro=rec.bairro)
             except GeocodeError as exc:
                 LOG.warning("geocode falhou para %r: %s", endereco, exc)
                 falhas += 1

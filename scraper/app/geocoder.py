@@ -22,10 +22,19 @@ class BackendGeocoder:
     async def aclose(self) -> None:
         await self._client.aclose()
 
-    async def geocode(self, endereco: str) -> tuple[float, float]:
-        """Retorna (lat, lng) ou levanta GeocodeError."""
+    async def geocode(
+        self, endereco: str, bairro: str | None = None, cidade: str = "São Paulo"
+    ) -> tuple[float, float]:
+        """Retorna (lat, lng) ou levanta GeocodeError.
+
+        `endereco` deve ser o nome da via (já normalizado); `bairro`/`cidade`
+        habilitam a busca estruturada no Nominatim (bem mais precisa que texto livre).
+        """
+        payload: dict[str, str] = {"endereco": endereco, "cidade": cidade}
+        if bairro:
+            payload["bairro"] = bairro
         try:
-            r = await self._client.post("/geocode", json={"endereco": endereco})
+            r = await self._client.post("/geocode", json=payload)
         except httpx.HTTPError as exc:
             raise GeocodeError(f"backend offline: {exc}") from exc
 
