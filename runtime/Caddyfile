@@ -1,0 +1,7 @@
+# Caddy serve o site em HTTPS (certificado Let's Encrypt automatico) e repassa
+# as requisicoes para o container do frontend (nginx interno). O dominio vem da
+# variavel SITE_ADDRESS (definida em runtime/.env). Ex.: roteamento.duckdns.org
+{$SITE_ADDRESS} {
+	encode gzip
+	reverse_proxy frontend:80
+}

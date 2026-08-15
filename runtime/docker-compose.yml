@@ -54,9 +54,8 @@ services:
     build: ../frontend
     container_name: frontend
     ports:
-      # porta 80 = HTTP padrao (acessivel por http://IP sem :porta e liberada na
-      # maioria das redes). 3000 mantida por compatibilidade com links antigos.
-      - "80:80"
+      # A 80/443 ficam com o Caddy (HTTPS). O frontend fica interno; a 3000
+      # segue publicada como acesso direto de emergencia (HTTP).
       - "3000:80"
     depends_on:
       backend:
@@ -68,6 +67,26 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
+    networks:
+      - roteamento
+
+  # Caddy: porta de entrada com HTTPS automatico (Let's Encrypt). Serve o site em
+  # https://$SITE_ADDRESS (portas 80/443) e repassa para o frontend interno.
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: "${SITE_ADDRESS:?defina SITE_ADDRESS em runtime/.env, ex roteamento.duckdns.org}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
     restart: unless-stopped
     networks:
       - roteamento
@@ -175,6 +194,8 @@ services:
 volumes:
   postgis_data:
   nominatim_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   roteamento:
